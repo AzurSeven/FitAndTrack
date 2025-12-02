@@ -431,25 +431,47 @@
             }
         }
 
-        async function inviteAthlete() {
+async function inviteAthlete() {
             const email = document.getElementById('invite-email').value;
             if(!email) return;
 
-            // 1. Check if user exists in DB (Using permissive policy)
-            // Note: Since we store email inside JSON, we filter in JS after fetching (Not efficient for millions, ok for prototype)
-            // Better: use .contains for JSONB
-            let { data, error } = await supabaseClient.from('user_data').select('user_id, content').eq('content->profile->email', email).maybeSingle();
+            // CORRECTION ICI : On utilise .contains au lieu de .eq pour le JSON
+            // Cela cherche une ligne où la colonne "content" contient ce morceau de JSON exact
+            let { data, error } = await supabaseClient
+                .from('user_data')
+                .select('user_id, content')
+                .contains('content', { profile: { email: email } })
+                .maybeSingle();
             
+            if(error) {
+                console.error("Erreur recherche:", error);
+                alert("Erreur technique lors de la recherche.");
+                return;
+            }
+
             if(data) {
                 const profile = data.content.profile;
-                userData.team.push({ email: profile.email, nom: profile.nom, prenom: profile.prenom, uid: data.user_id });
-                syncData();
-                updateUI();
-                populateCoachSelector();
-                document.getElementById('invite-email').value = '';
-                alert(`${profile.prenom} ajouté à l'équipe !`);
+                // On vérifie qu'il n'est pas déjà dans l'équipe pour éviter les doublons
+                const alreadyInTeam = userData.team.some(m => m.uid === data.user_id);
+                
+                if(alreadyInTeam) {
+                    alert("Cet athlète est déjà dans votre équipe !");
+                } else {
+                    userData.team.push({ 
+                        email: profile.email, 
+                        nom: profile.nom, 
+                        prenom: profile.prenom, 
+                        uid: data.user_id 
+                    });
+                    
+                    syncData();
+                    updateUI();
+                    populateCoachSelector(); // Mettre à jour la liste déroulante
+                    document.getElementById('invite-email').value = '';
+                    alert(`${profile.prenom} ajouté à l'équipe !`);
+                }
             } else {
-                alert("Aucun utilisateur trouvé avec cet email.");
+                alert("Aucun utilisateur trouvé avec cet email. Vérifiez qu'il s'est bien inscrit sur l'app.");
             }
         }
 
@@ -628,4 +650,5 @@
         function initCalendar() { /* ... */ }
     </script>
 </body>
+
 </html>
