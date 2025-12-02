@@ -164,7 +164,7 @@
                             <input type="text" id="exo-load" placeholder="kg" class="w-full bg-gray-800 rounded p-2 text-xs text-white border border-gray-700">
                             <input type="text" id="exo-note" placeholder="Consignes" class="w-full bg-gray-800 rounded p-2 text-xs text-white border border-gray-700">
                         </div>
-                        <button onclick="addExerciseToTemp()" id="btn-add-exo" class="w-full bg-gray-700 hover:bg-white hover:text-black text-white text-xs py-2 rounded font-bold transition">+ Ajouter Ligne</button>
+                        <button onclick="addExerciseToTemp()" id="btn-add-exo" class="w-full bg-gray-700 hover:bg-white hover:text-black text-white text-xs py-2 rounded font-bold transition">+ Ajouter Exercice</button>
                     </div>
 
                     <button onclick="addSessionToStack()" id="btn-validate-session" class="w-full py-3 bg-app-accent/20 text-app-accent border border-app-accent/50 hover:bg-app-accent hover:text-white text-sm font-bold rounded-lg transition">Ajouter cette séance</button>
@@ -302,6 +302,8 @@
             const now = new Date();
             const yearMonth = now.toISOString().slice(0, 7);
             const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+            document.getElementById('calendar-month-title').innerText = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
 
             for(let i=1; i<=daysInMonth; i++) {
                 const k = `${yearMonth}-${String(i).padStart(2, '0')}`;
@@ -637,3 +639,4 @@
     </script>
 </body>
 </html>
+
