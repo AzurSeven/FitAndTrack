@@ -302,8 +302,7 @@
             const now = new Date();
             const yearMonth = now.toISOString().slice(0, 7);
             const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
-            document.getElementById('calendar-month-title').innerText = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
 
             for(let i=1; i<=daysInMonth; i++) {
                 const k = `${yearMonth}-${String(i).padStart(2, '0')}`;
