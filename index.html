@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fitness App Pro - V19 (Final Management)</title>
+    <title>Fitness App Pro - V19</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -28,7 +28,6 @@
         .nav-btn { color: #6b7280; transition: all 0.3s ease; }
         .nav-btn.active { color: #8b5cf6 !important; } 
         .nav-btn.active svg { filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6)); transform: scale(1.15); }
-        
         .btn-validated { background-color: #22c55e !important; color: black !important; border-color: #22c55e !important; }
 
         #cloud-toast { transition: opacity 0.3s ease, transform 0.3s ease; }
@@ -40,7 +39,7 @@
 
     <div id="cloud-toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-[110] bg-gray-800 border border-gray-600 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 toast-hidden">
         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <span class="text-xs font-bold text-white">Sauvegarde...</span>
+        <span class="text-xs font-bold text-white">Synchronisé</span>
     </div>
 
     <section id="view-auth" class="fixed inset-0 z-[100] bg-[#0f0f0f] flex flex-col items-center justify-center p-6 transition-all duration-500 overflow-y-auto">
@@ -117,7 +116,7 @@
                 <div class="grid grid-cols-7 gap-2 text-sm text-center" id="calendar-grid"></div>
             </div>
             <div id="calendar-day-detail" class="fade-in">
-                <div class="bg-gray-800/30 border border-dashed border-gray-700 rounded-xl p-6 text-center text-sm text-gray-500">Sélectionne une date.</div>
+                <div class="bg-gray-800/30 border border-dashed border-gray-700 rounded-xl p-6 text-center text-sm text-gray-500">Chargement...</div>
             </div>
         </section>
 
@@ -146,7 +145,7 @@
                     <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-800 space-y-3">
                         <div class="grid grid-cols-2 gap-2">
                             <input type="text" id="exo-name" placeholder="Nom Exercice" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none">
-                            <input type="text" id="exo-format" placeholder="Format (ex: Top Set)" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none font-bold text-app-accent placeholder-gray-600">
+                            <input type="text" id="exo-format" placeholder="Format" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none font-bold text-app-accent placeholder-gray-600">
                         </div>
                         <div class="grid grid-cols-4 gap-2">
                             <input type="number" id="exo-sets" placeholder="Séries" class="bg-gray-800 rounded p-2 text-sm text-center text-white border border-gray-700">
@@ -158,15 +157,16 @@
                             <input type="text" id="exo-load" placeholder="Charge Rec." class="w-full bg-gray-800 rounded p-2 text-xs text-white border border-gray-700">
                             <input type="text" id="exo-note" placeholder="Consignes" class="w-full bg-gray-800 rounded p-2 text-xs text-white border border-gray-700">
                         </div>
-                        <button onclick="addExerciseToTemp()" class="w-full bg-gray-700 hover:bg-white hover:text-black text-white text-xs py-2 rounded font-bold transition">+ Ajouter Ligne</button>
+                        <button onclick="addExerciseToTemp()" id="btn-add-exo" class="w-full bg-gray-700 hover:bg-white hover:text-black text-white text-xs py-2 rounded font-bold transition">+ Ajouter Ligne</button>
                     </div>
 
                     <button onclick="addSessionToStack()" id="btn-validate-session" class="w-full py-3 bg-app-accent/20 text-app-accent border border-app-accent/50 hover:bg-app-accent hover:text-white text-sm font-bold rounded-lg transition">Ajouter cette séance</button>
-                    <button onclick="updateEditedSession()" id="btn-update-session" class="hidden w-full py-3 bg-green-500 text-black font-bold rounded-lg transition">Mettre à jour la séance</button>
+                    <button onclick="updateSessionInStack()" id="btn-update-session-stack" class="hidden w-full py-3 bg-blue-600 text-white font-bold rounded-lg">Mettre à jour la séance</button>
                 </div>
             </div>
 
             <button type="button" onclick="saveFullProgram()" id="btn-save-program" class="w-full bg-white text-black font-bold py-4 rounded-xl shadow-lg mt-8 mb-4">Sauvegarder le Programme</button>
+            <button type="button" onclick="saveEditedSession()" id="btn-update-session" class="hidden w-full bg-green-500 hover:bg-green-400 text-black font-bold py-4 rounded-xl shadow-lg mt-8 mb-4">Mettre à jour la séance</button>
         </section>
 
         <section id="view-preview" class="fixed inset-0 bg-app-bg z-[55] p-6 flex flex-col hidden overflow-y-auto">
@@ -256,12 +256,14 @@
         let currentCoachTarget = null;
         let chartInstance = null;
         
-        // Editing State
+        // EDITING STATES
         let isEditingMode = false;
         let editingProgramIndex = null;
         let editingSessionIndex = null;
+        let editingExoIndex = null; // NEW: To edit single exercises in stack
         
         let activeSessionExercises = null;
+        let tempSessionStack = [], tempExercises = [];
 
         // AUTH
         window.onload = async function() {
@@ -287,7 +289,6 @@
             const fname = document.getElementById('reg-fname').value;
             const lname = document.getElementById('reg-lname').value;
             if(!pseudo || !fname || !lname) return alert("Tous les champs requis");
-
             const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
             if (error) document.getElementById('auth-message').innerText = error.message;
             else { 
@@ -312,7 +313,9 @@
                 if(userData.profile.role === 'coach') populateCoachSelector();
                 updateStatsDropdown();
             }
-            initCalendar();
+            // CALENDAR DEFAULT TO TODAY
+            const todayKey = new Date().toISOString().split('T')[0];
+            initCalendar(todayKey);
         }
         async function syncData(targetUserData = null, targetUserId = null) {
             const t = document.getElementById('cloud-toast');
@@ -367,15 +370,16 @@
             programsToShow.forEach((prog, pIdx) => {
                 const isCoachProg = prog.source === 'coach';
                 const border = isCoachProg ? 'border-app-accent' : 'border-gray-800';
-                
-                // Duplication icon
                 const copyBtn = `<button onclick="event.stopPropagation(); duplicateProgram(${pIdx})" class="text-gray-400 hover:text-white ml-2">❐</button>`;
 
                 libContainer.innerHTML += `
                     <div class="bg-app-card p-4 rounded-xl border ${border} mb-3">
-                        <div class="flex justify-between items-center mb-2"><h4 class="font-bold text-white flex items-center">${prog.name} <button onclick="event.stopPropagation(); renameProgram(${pIdx})" class="text-xs text-gray-500 ml-2">✎</button></h4><div class="flex items-center">${isCoachProg ? '<span class="text-[10px] bg-app-accent px-2 rounded text-white mr-2">COACH</span>' : ''}${copyBtn}</div></div>
+                        <div class="flex justify-between items-center mb-2"><h4 class="font-bold text-white flex items-center">${prog.name} ${renameBtn(pIdx)}</h4><div class="flex items-center">${isCoachProg ? '<span class="text-[10px] bg-app-accent px-2 rounded text-white mr-2">COACH</span>' : ''}${copyBtn}</div></div>
                         <div class="space-y-1">${prog.sessions.map((s, sIdx) => `
-                            <div onclick="openPreview(${pIdx}, ${sIdx})" class="text-sm text-gray-400 hover:text-white flex justify-between bg-gray-900/50 p-2 rounded cursor-pointer"><span>${s.name}</span><span>➤</span></div>`).join('')}</div>
+                            <div class="flex justify-between items-center bg-gray-900/50 p-3 rounded">
+                                <div onclick="openPreview(${pIdx}, ${sIdx})" class="flex-grow text-sm text-gray-400 hover:text-white cursor-pointer">${s.name}</div>
+                                <button onclick="editSessionFromList(${pIdx}, ${sIdx})" class="text-xs text-app-accent bg-gray-800 px-2 py-1 rounded ml-2">Modif.</button>
+                            </div>`).join('')}</div>
                     </div>`;
 
                 prog.sessions.forEach((s, sIdx) => {
@@ -384,28 +388,23 @@
             });
         }
 
+        function renameBtn(pIdx) { return `<button onclick="event.stopPropagation(); renameProgram(${pIdx})" class="text-gray-400 hover:text-white ml-2">✎</button>`; }
+        function renameProgram(pIdx) {
+            const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
+            const newName = prompt("Nouveau nom :", dataSrc.programs[pIdx].name);
+            if(newName) { dataSrc.programs[pIdx].name = newName; if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id); else syncData(); updateUI(); }
+        }
         function duplicateProgram(pIdx) {
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
-            const copy = JSON.parse(JSON.stringify(dataSrc.programs[pIdx]));
+            const original = dataSrc.programs[pIdx];
+            const copy = JSON.parse(JSON.stringify(original));
             copy.name += " (Copie)";
             dataSrc.programs.push(copy);
             if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id); else syncData();
             updateUI();
         }
 
-        function renameProgram(pIdx) {
-            const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
-            const newName = prompt("Nouveau nom :", dataSrc.programs[pIdx].name);
-            if(newName) {
-                dataSrc.programs[pIdx].name = newName;
-                if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id); else syncData();
-                updateUI();
-            }
-        }
-
-        function renderTeamList() {
-            document.getElementById('team-list-display').innerHTML = userData.team.map(m => `<div class="text-xs text-gray-300 bg-gray-800 p-2 rounded flex justify-between items-center border border-gray-700"><div><span class="font-bold block">${m.prenom} ${m.nom}</span><span class="text-gray-500">${m.email}</span></div></div>`).join('');
-        }
+        function renderTeamList() { document.getElementById('team-list-display').innerHTML = userData.team.map(m => `<div class="text-xs text-gray-300 bg-gray-800 p-2 rounded flex justify-between items-center border border-gray-700"><div><span class="font-bold block">${m.prenom} ${m.nom}</span><span class="text-gray-500">${m.email}</span></div></div>`).join(''); }
 
         // COACHING
         function attemptUpgradeCoach() { if(document.getElementById('coach-code-input').value === "SUPACOACH") { userData.profile.role = 'coach'; syncData(); updateUI(); alert("Mode Coach !"); } }
@@ -436,121 +435,169 @@
         }
 
         // CREATION & EDIT
-        let tempSessionStack = [], tempExercises = [];
-        
         function addExerciseToTemp() {
-            const name = document.getElementById('exo-name').value; if(!name) return;
-            tempExercises.push({ name, format: document.getElementById('exo-format').value, sets: document.getElementById('exo-sets').value, reps: document.getElementById('exo-reps').value, rest: document.getElementById('exo-rest').value, rpe: document.getElementById('exo-rpe').value, load: document.getElementById('exo-load').value, note: document.getElementById('exo-note').value });
+            const name = document.getElementById('exo-name').value;
+            if(!name) return;
+            
+            // EDIT EXISTING EXERCISE IN LIST
+            if(editingExoIndex !== null) {
+                tempExercises[editingExoIndex] = {
+                    name, 
+                    format: document.getElementById('exo-format').value,
+                    sets: document.getElementById('exo-sets').value,
+                    reps: document.getElementById('exo-reps').value,
+                    rest: document.getElementById('exo-rest').value,
+                    rpe: document.getElementById('exo-rpe').value,
+                    load: document.getElementById('exo-load').value,
+                    note: document.getElementById('exo-note').value
+                };
+                editingExoIndex = null;
+                document.getElementById('btn-add-exo').innerText = "+ Ajouter Ligne";
+            } else {
+                // ADD NEW
+                tempExercises.push({ 
+                    name, 
+                    format: document.getElementById('exo-format').value, 
+                    sets: document.getElementById('exo-sets').value, 
+                    reps: document.getElementById('exo-reps').value, 
+                    rest: document.getElementById('exo-rest').value, 
+                    rpe: document.getElementById('exo-rpe').value, 
+                    load: document.getElementById('exo-load').value, 
+                    note: document.getElementById('exo-note').value 
+                });
+            }
+            
             renderTempExos();
-            document.getElementById('exo-name').value = ''; document.getElementById('exo-format').value = '';
+            document.getElementById('exo-name').value = '';
         }
-        
-        function renderTempExos() { document.getElementById('temp-exercises-list').innerHTML = tempExercises.map(e=>`<div class="text-xs text-gray-400 border-l-2 border-app-accent pl-2 mb-1">${e.name} (${e.format})</div>`).join(''); }
 
+        function renderTempExos() {
+            document.getElementById('temp-exercises-list').innerHTML = tempExercises.map((e, i) => `
+                <div class="flex justify-between items-center bg-gray-800 p-2 rounded mb-2 border border-gray-700">
+                    <div class="flex-grow cursor-pointer" onclick="loadExoForEdit(${i})">
+                        <span class="text-xs font-bold text-white block">${e.name} <span class="text-app-topSet">${e.format || ''}</span></span>
+                        <span class="text-[10px] text-gray-400">${e.sets}x${e.reps} ${e.load ? '@ '+e.load : ''}</span>
+                    </div>
+                    <button onclick="removeExo(${i})" class="text-red-500 text-xs px-2">✕</button>
+                </div>`).join('');
+        }
+
+        function removeExo(index) {
+            tempExercises.splice(index, 1);
+            renderTempExos();
+        }
+
+        function loadExoForEdit(index) {
+            const e = tempExercises[index];
+            editingExoIndex = index;
+            document.getElementById('exo-name').value = e.name;
+            document.getElementById('exo-format').value = e.format || "";
+            document.getElementById('exo-sets').value = e.sets;
+            document.getElementById('exo-reps').value = e.reps;
+            document.getElementById('exo-rest').value = e.rest;
+            document.getElementById('exo-rpe').value = e.rpe;
+            document.getElementById('exo-load').value = e.load;
+            document.getElementById('exo-note').value = e.note;
+            document.getElementById('btn-add-exo').innerText = "Modifier Ligne";
+        }
+
+        // SESSION STACK MANAGEMENT
         function addSessionToStack() {
             const name = document.getElementById('session-name').value; if(!name) return;
             tempSessionStack.push({name, exercises: [...tempExercises]});
-            tempExercises = []; renderTempExos(); document.getElementById('session-name').value = '';
-            document.getElementById('added-sessions-list').innerHTML = tempSessionStack.map(s=>`<div class="bg-gray-800 p-2 rounded text-sm text-white">${s.name}</div>`).join('');
+            tempExercises = []; renderTempExos(); 
+            document.getElementById('session-name').value = '';
+            renderSessionStackUI();
         }
         
+        function renderSessionStackUI() {
+            document.getElementById('added-sessions-list').innerHTML = tempSessionStack.map((s, idx) => `
+                <div class="bg-gray-800 border-l-4 border-app-success p-2 rounded mb-2 flex justify-between cursor-pointer" onclick="loadSessionFromStack(${idx})">
+                    <div class="text-sm text-white">${s.name} <span class="text-xs text-gray-500">(${s.exercises.length} exos)</span></div>
+                    <button onclick="event.stopPropagation(); removeSessionFromStack(${idx})" class="text-red-400 text-xs">✕</button>
+                </div>`).join('');
+        }
+
+        function removeSessionFromStack(idx) {
+            tempSessionStack.splice(idx, 1);
+            renderSessionStackUI();
+        }
+
+        function loadSessionFromStack(idx) {
+            // Load a session back from stack to edit it BEFORE saving program
+            // This requires moving it back to inputs and removing from stack
+            const s = tempSessionStack[idx];
+            document.getElementById('session-name').value = s.name;
+            tempExercises = [...s.exercises];
+            renderTempExos();
+            tempSessionStack.splice(idx, 1);
+            renderSessionStackUI();
+        }
+        
+        function updateSessionInStack() {
+            // Update logic for session editing (from existing program)
+            // Not used for initial creation flow, but for "Edit Session" flow
+        }
+
         async function saveFullProgram() {
             const name = document.getElementById('program-name').value;
             if(!name || tempSessionStack.length === 0) return alert("Incomplet");
-            const newProg = { name: name, source: currentCoachTarget ? 'coach' : 'personal', sessions: tempSessionStack };
             
+            const newProg = { name: name, source: currentCoachTarget ? 'coach' : 'personal', sessions: tempSessionStack };
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
             const targetUserId = currentCoachTarget ? currentCoachTarget.user_id : currentUser.id;
 
-            // If editing existing session (logic for session edit from preview)
-            if(isEditingMode && editingSessionIndex !== null) {
-                // Here we are replacing the session, but we need to know which program
-                dataSrc.programs[currentProgramIndex].sessions[editingSessionIndex] = {
-                     name: document.getElementById('session-name').value,
-                     exercises: tempExercises
-                };
-                isEditingMode = false; // Reset
-                editingSessionIndex = null;
-            } else {
-                // Logic for creating NEW program
-                // But wait, user asked to "modify each session... as if creating new".
-                // This means we need logic to update.
-                // Current logic pushes new program.
-                dataSrc.programs.push(newProg);
-            }
-
+            dataSrc.programs.push(newProg);
             await syncData(dataSrc, targetUserId);
             
-            tempSessionStack = []; document.getElementById('program-name').value = ''; document.getElementById('added-sessions-list').innerHTML = ''; 
-            // Reset edit mode UI
-            document.getElementById('btn-validate-session').innerText = "Ajouter cette séance au programme";
-            document.getElementById('btn-save-program').classList.remove('hidden');
-            document.getElementById('btn-update-session').classList.add('hidden');
-            
+            resetAddView(); 
             switchTab('view-library', null, 'Bibliothèque');
         }
 
-        // EDITING SESSIONS
-        function editSessionFromPreview() {
-            isEditingMode = true;
-            editingSessionIndex = currentPreviewSessionIndex;
-            closePreview();
-            
+        // EDIT EXISTING SESSION
+        function editSessionFromList(pIdx, sIdx) {
+            currentProgramIndex = pIdx; currentPreviewSessionIndex = sIdx;
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
-            const sess = dataSrc.programs[currentProgramIndex].sessions[editingSessionIndex];
+            const sess = dataSrc.programs[pIdx].sessions[sIdx];
+            isEditingMode = true;
+            editingSessionIndex = sIdx;
             
-            // Populate fields
             document.getElementById('session-name').value = sess.name;
-            tempExercises = [...sess.exercises];
-            renderTempExos();
+            tempExercises = [...sess.exercises]; renderTempExos();
             
-            // Change UI to Edit Mode
-            document.getElementById('program-name-container').classList.add('hidden');
-            document.getElementById('added-sessions-list').classList.add('hidden');
-            document.getElementById('btn-validate-session').classList.add('hidden'); // Hide "Add to stack"
+            document.getElementById('program-name-container').classList.add('hidden'); 
+            document.getElementById('added-sessions-list').classList.add('hidden'); 
+            document.getElementById('btn-validate-session').classList.add('hidden'); 
             document.getElementById('btn-save-program').classList.add('hidden');
-            document.getElementById('btn-update-session').classList.remove('hidden');
+            document.getElementById('btn-update-session').classList.remove('hidden'); 
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+            document.getElementById('add-mode-label').innerText = "Modifier Séance";
             
             switchTab('view-add', null, 'Modification');
         }
 
         async function saveEditedSession() {
-            const newName = document.getElementById('session-name').value;
-            if(!newName) return alert("Nom requis");
-            
-            const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
-            dataSrc.programs[currentProgramIndex].sessions[editingSessionIndex] = {
-                name: newName,
-                exercises: [...tempExercises]
-            };
-            
-            await syncData(dataSrc, currentCoachTarget ? currentCoachTarget.user_id : currentUser.id);
-            
-            // Reset UI
-            isEditingMode = false;
-            editingSessionIndex = null;
-            tempExercises = [];
-            document.getElementById('session-name').value = '';
-            renderTempExos();
-            document.getElementById('program-name-container').classList.remove('hidden');
-            document.getElementById('added-sessions-list').classList.remove('hidden');
-            document.getElementById('btn-validate-session').classList.remove('hidden');
-            document.getElementById('btn-save-program').classList.remove('hidden');
-            document.getElementById('btn-update-session').classList.add('hidden');
-            
-            switchTab('view-library', null, 'Bibliothèque');
+            const newName = document.getElementById('session-name').value; if(!newName) return alert("Nom requis");
+            const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData; const userId = currentCoachTarget ? currentCoachTarget.user_id : currentUser.id;
+            dataSrc.programs[currentProgramIndex].sessions[editingSessionIndex] = { name: newName, exercises: [...tempExercises] };
+            await syncData(dataSrc, userId); alert("Séance mise à jour !"); resetAddView(); switchTab('view-library', null, 'Bibliothèque');
         }
 
-        function cancelEdit() {
-            isEditingMode = false;
-            editingSessionIndex = null;
-            tempExercises = [];
-            document.getElementById('program-name-container').classList.remove('hidden');
-            document.getElementById('added-sessions-list').classList.remove('hidden');
-            document.getElementById('btn-validate-session').classList.remove('hidden');
-            document.getElementById('btn-save-program').classList.remove('hidden');
-            document.getElementById('btn-update-session').classList.add('hidden');
-            switchTab('view-library', null, 'Bibliothèque');
+        function cancelEdit() { resetAddView(); switchTab('view-library', null, 'Bibliothèque'); }
+        function resetAddView() { 
+            isEditingMode = false; editingProgramIndex = null; editingSessionIndex = null; editingExoIndex = null;
+            tempSessionStack = []; tempExercises = []; 
+            document.getElementById('session-name').value = ''; 
+            document.getElementById('program-name').value = ''; 
+            renderTempExos(); renderSessionStackUI();
+            
+            document.getElementById('program-name-container').classList.remove('hidden'); 
+            document.getElementById('added-sessions-list').classList.remove('hidden'); 
+            document.getElementById('btn-validate-session').classList.remove('hidden'); 
+            document.getElementById('btn-save-program').classList.remove('hidden'); 
+            document.getElementById('btn-update-session').classList.add('hidden'); 
+            document.getElementById('btn-cancel-edit').classList.add('hidden'); 
+            document.getElementById('add-mode-label').innerText = "Nouveau Programme"; 
         }
 
         // PREVIEW
@@ -560,7 +607,7 @@
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData; const sess = dataSrc.programs[pIdx].sessions[sIdx];
             document.getElementById('preview-title').innerText = sess.name;
             const btnDel = document.getElementById('btn-delete-session');
-            // Allow editing for everyone now per request
+            if(dataSrc.programs[pIdx].source === 'coach' && userData.profile.role !== 'coach') btnDel.classList.add('hidden'); else btnDel.classList.remove('hidden');
             document.getElementById('preview-exo-list').innerHTML = sess.exercises.map(e => `
                 <div class="bg-gray-800 rounded p-3 border border-gray-700">
                     <div class="flex justify-between items-start mb-1">
@@ -591,7 +638,7 @@
         function validateSet(btn, exoIdx, setIdx) { 
             const rpe = prompt("RPE (1-10)?", "8"); 
             if(rpe) { 
-                btn.innerText = "✓"; btn.className = "w-full rounded py-2 font-bold text-xs btn-validated"; // Fixed class
+                btn.innerText = "✓"; btn.className = "w-full rounded py-2 font-bold text-xs btn-validated"; 
                 const row = document.getElementById(`set-row-${exoIdx}-${setIdx}`); 
                 row.dataset.performed = JSON.stringify({ kg: row.querySelectorAll('input')[0].value || 0, reps: row.querySelectorAll('input')[1].value || 0, rpe }); 
             } 
@@ -613,7 +660,7 @@
         function minimizeWorkout() { document.getElementById('view-active-workout').classList.add('hidden'); }
         function returnToActiveWorkout() { document.getElementById('view-active-workout').classList.remove('hidden'); }
 
-        // CHARTS & CALENDAR DETAILS (V18 ENHANCEMENT)
+        // CHARTS & CALENDAR
         function updateStatsDropdown() {
             const sel = document.getElementById('stats-exo-select'); sel.innerHTML = '<option>Choisir...</option>'; const exos = new Set();
             Object.values(userData.history).flat().forEach(s => { if(s.exercises) s.exercises.forEach(e => exos.add(e.name)) });
@@ -634,7 +681,7 @@
             const addBtn = document.getElementById('header-add-btn'); if(viewId === 'view-library') addBtn.classList.remove('hidden'); else addBtn.classList.add('hidden');
             if(viewId === 'view-add') document.getElementById('add-target-display').innerText = currentCoachTarget ? currentCoachTarget.content.profile.prenom : "Moi-même";
         }
-        function initCalendar() {
+        function initCalendar(optionalKey) {
             const grid = document.getElementById('calendar-grid'); grid.innerHTML = ''; for(let i=0; i<2; i++) grid.innerHTML += `<div></div>`;
             const yearMonth = new Date().toISOString().slice(0, 7);
             for(let i=1; i<=31; i++) {
@@ -642,15 +689,12 @@
                 const hasWork = userData.history[k];
                 grid.innerHTML += `<div onclick="showDayDetails('${k}')" class="p-2 rounded-lg cursor-pointer hover:bg-gray-800 ${hasWork?'text-white font-bold':'text-gray-600'} ${i===new Date().getDate()?'border border-app-accent':''}">${i} ${hasWork?'<div class="w-1 h-1 bg-app-success rounded-full mx-auto"></div>':''}</div>`;
             }
+            if(optionalKey) showDayDetails(optionalKey);
         }
         function showDayDetails(k) {
             const s = userData.history[k]; const b = document.getElementById('calendar-day-detail');
             if(s) b.innerHTML = s.map(sess => {
-                // V18 Enhanced Details
-                const details = sess.exercises.map(e => {
-                    const maxLoad = Math.max(...e.sets.map(set => parseFloat(set.kg)));
-                    return `<div class="flex justify-between text-xs text-gray-400 border-b border-gray-700 pb-1"><span>${e.name}</span><span>${e.sets.length} sets (Max: ${maxLoad}kg)</span></div>`;
-                }).join('');
+                const details = sess.exercises.map(e => `<div class="flex justify-between text-xs text-gray-400 border-b border-gray-700 pb-1"><span>${e.name}</span><span>Max: ${Math.max(...e.sets.map(i=>parseFloat(i.kg)))}kg (${e.sets.length} sets)</span></div>`).join('');
                 return `<div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-2"><div class="flex justify-between mb-2"><span class="text-app-success font-bold text-xs">✓ Terminé</span><span class="text-gray-500 text-xs">${sess.duration}</span></div><div class="text-white font-bold mb-2">${sess.title}</div><div class="space-y-1">${details}</div></div>`;
             }).join('');
             else b.innerHTML = `<div class="bg-gray-800/30 border border-dashed border-gray-700 rounded-xl p-6 text-center text-sm text-gray-500">Rien ce jour-là.</div>`;
