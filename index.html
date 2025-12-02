@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fitness App Pro - V14 (Final Polish)</title>
+    <title>Fitness App Pro - V15 (Edit & Fixes)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -25,11 +25,14 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         
-        /* Navigation Active State - FORCÉ */
+        /* Nav Active State */
         .nav-btn { color: #6b7280; transition: all 0.3s ease; }
         .nav-btn.active { color: #8b5cf6 !important; } 
         .nav-btn.active svg { filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6)); transform: scale(1.15); }
         
+        /* Validation Button State */
+        .btn-validated { background-color: #22c55e !important; color: black !important; border-color: #22c55e !important; }
+
         #cloud-toast { transition: opacity 0.3s ease, transform 0.3s ease; }
         .toast-hidden { opacity: 0; transform: translateY(-20px); pointer-events: none; }
         .toast-visible { opacity: 1; transform: translateY(0); }
@@ -39,7 +42,7 @@
 
     <div id="cloud-toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-[110] bg-gray-800 border border-gray-600 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 toast-hidden">
         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <span class="text-xs font-bold text-white">Synchronisé</span>
+        <span class="text-xs font-bold text-white">Sauvegarde...</span>
     </div>
 
     <section id="view-auth" class="fixed inset-0 z-[100] bg-[#0f0f0f] flex flex-col items-center justify-center p-6 transition-all duration-500 overflow-y-auto">
@@ -71,9 +74,6 @@
     <header class="sticky top-0 z-50 bg-app-bg/95 backdrop-blur-sm p-4 border-b border-gray-800 flex justify-between items-center h-16">
         <h1 id="page-title" class="text-xl font-bold tracking-tight">Accueil</h1>
         <div class="flex items-center gap-3">
-            <button id="header-add-btn" onclick="switchTab('view-add', null, 'Création')" class="hidden bg-app-accent hover:bg-white hover:text-black text-white w-8 h-8 rounded-full flex items-center justify-center transition">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-            </button>
             <div id="workout-timer-display" class="hidden bg-gray-800 px-3 py-1 rounded-full border border-gray-700 flex items-center gap-2 cursor-pointer transition active:scale-95" onclick="returnToActiveWorkout()">
                 <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                 <span id="timer-val" class="font-mono font-bold text-sm">00:00</span>
@@ -105,6 +105,9 @@
             </div>
             <div class="mb-6 flex justify-between items-end">
                 <div><h2 class="text-2xl font-bold text-white mb-1" id="lib-title">Mes Programmes</h2></div>
+                <button onclick="switchTab('view-add', null, 'Création')" class="bg-app-accent hover:bg-white hover:text-black text-white w-8 h-8 rounded-full flex items-center justify-center transition shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                </button>
             </div>
             <div id="lib-list-container" class="space-y-3"></div>
         </section>
@@ -121,22 +124,30 @@
         </section>
 
         <section id="view-add" class="view-section hidden fade-in">
-            <div class="bg-app-accent/10 border border-app-accent/30 rounded-lg p-2 mb-4 text-center">
-                <span class="text-xs text-gray-400">Pour :</span> <span id="add-target-display" class="font-bold text-app-accent text-sm">Moi-même</span>
+            <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+                <div>
+                    <label class="text-xs text-app-accent uppercase font-bold tracking-wider" id="add-mode-label">Créer Programme</label>
+                    <div class="text-[10px] text-gray-500 mt-1">Pour : <span id="add-target-display" class="text-white font-bold">Moi-même</span></div>
+                </div>
+                <button onclick="cancelEdit()" id="btn-cancel-edit" class="hidden text-xs text-red-400 border border-red-900/50 px-2 py-1 rounded">Annuler</button>
             </div>
-            <div class="mb-6 border-b border-gray-800 pb-4">
-                <label class="text-xs text-app-accent uppercase font-bold tracking-wider">Programme</label>
-                <input type="text" id="program-name" placeholder="Ex: Bloc Force 1" class="w-full bg-transparent text-xl font-bold placeholder-gray-600 outline-none mt-1 text-white">
+
+            <div id="program-name-container" class="mb-4">
+                <input type="text" id="program-name" placeholder="Nom du Programme (Ex: Hypertrophie)" class="w-full bg-transparent text-xl font-bold placeholder-gray-600 outline-none text-white">
             </div>
+
             <div id="added-sessions-list" class="space-y-3 mb-8"></div>
+
             <div class="bg-app-card p-4 rounded-xl border border-gray-800 relative">
-                <div class="absolute -top-3 left-3 bg-app-card px-2 text-xs text-gray-400 font-bold border border-gray-800 rounded">Nouvelle Séance</div>
+                <div class="absolute -top-3 left-3 bg-app-card px-2 text-xs text-gray-400 font-bold border border-gray-800 rounded">Détails Séance</div>
                 <div class="space-y-4 mt-2">
-                    <input type="text" id="session-name" placeholder="Nom (ex: Squat Day)" class="w-full bg-gray-900 rounded-lg p-3 text-sm border border-gray-700 focus:border-app-accent outline-none text-white">
+                    <input type="text" id="session-name" placeholder="Nom Séance (ex: Legs)" class="w-full bg-gray-900 rounded-lg p-3 text-sm border border-gray-700 focus:border-app-accent outline-none text-white font-bold">
+                    
                     <div id="temp-exercises-list" class="space-y-2"></div>
+                    
                     <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-800 space-y-3">
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="exo-name" placeholder="Exercice" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none">
+                            <input type="text" id="exo-name" placeholder="Nom Exercice" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none">
                             <input type="text" id="exo-format" placeholder="Format (ex: Top Set)" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none font-bold text-app-accent placeholder-gray-600">
                         </div>
                         <div class="grid grid-cols-4 gap-2">
@@ -151,16 +162,22 @@
                         </div>
                         <button onclick="addExerciseToTemp()" class="w-full bg-gray-700 hover:bg-white hover:text-black text-white text-xs py-2 rounded font-bold transition">+ Ajouter Ligne</button>
                     </div>
-                    <button onclick="addSessionToStack()" class="w-full py-3 bg-app-accent/20 text-app-accent border border-app-accent/50 hover:bg-app-accent hover:text-white text-sm font-bold rounded-lg transition">Valider Séance</button>
+
+                    <button onclick="addSessionToStack()" id="btn-validate-session" class="w-full py-3 bg-app-accent/20 text-app-accent border border-app-accent/50 hover:bg-app-accent hover:text-white text-sm font-bold rounded-lg transition">Ajouter cette séance au programme</button>
                 </div>
             </div>
-            <button type="button" onclick="saveFullProgram()" class="w-full bg-white text-black font-bold py-4 rounded-xl shadow-lg mt-8 mb-4">Sauvegarder</button>
+
+            <button type="button" onclick="saveFullProgram()" id="btn-save-program" class="w-full bg-white text-black font-bold py-4 rounded-xl shadow-lg mt-8 mb-4">Sauvegarder le Programme</button>
+            <button type="button" onclick="saveEditedSession()" id="btn-update-session" class="hidden w-full bg-green-500 hover:bg-green-400 text-black font-bold py-4 rounded-xl shadow-lg mt-8 mb-4">Mettre à jour la séance</button>
         </section>
 
         <section id="view-preview" class="fixed inset-0 bg-app-bg z-[55] p-6 flex flex-col hidden overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
                 <button onclick="closePreview()" class="text-gray-400 hover:text-white">✕ Fermer</button>
-                <button id="btn-delete-session" onclick="deleteSessionFromPreview()" class="text-app-danger text-sm border border-app-danger/30 px-3 py-1 rounded hover:bg-app-danger/10">Supprimer</button>
+                <div class="flex gap-2">
+                    <button onclick="editSessionFromPreview()" class="text-app-accent text-sm border border-app-accent/30 px-3 py-1 rounded hover:bg-app-accent/10">Modifier ✏️</button>
+                    <button id="btn-delete-session" onclick="deleteSessionFromPreview()" class="text-app-danger text-sm border border-app-danger/30 px-3 py-1 rounded hover:bg-app-danger/10">Supprimer</button>
+                </div>
             </div>
             <div id="preview-badge-coach" class="hidden mb-2"><span class="bg-app-accent text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Coach</span></div>
             <h1 class="text-3xl font-black italic text-white mb-2" id="preview-title">TITRE</h1>
@@ -225,7 +242,7 @@
         <div class="flex justify-around items-center h-full px-2">
             <button onclick="switchTab('view-calendar', this, 'Calendrier')" id="nav-cal" class="nav-btn p-4"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg></button>
             <button onclick="switchTab('view-stats', this, 'Statistiques')" id="nav-stats" class="nav-btn p-4"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg></button>
-            <button onclick="switchTab('view-home', this, 'Accueil')" id="nav-home" class="nav-btn active text-app-accent p-4"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg></button>
+            <button onclick="switchTab('view-home', this, 'Accueil')" id="nav-home" class="nav-btn p-4"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg></button>
             <button onclick="switchTab('view-library', this, 'Bibliothèque')" id="nav-lib" class="nav-btn p-4"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg></button>
             <button onclick="switchTab('view-profile', this, 'Profil')" id="nav-prof" class="nav-btn p-4"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg></button>
         </div>
@@ -240,10 +257,10 @@
         let userData = { profile: {}, team: [], history: {}, stats: { volume: 0, sessions: 0 }, programs: [] };
         let currentCoachTarget = null;
         let chartInstance = null;
+        let isEditingMode = false;
 
         // AUTH
         window.onload = async function() {
-            // Force Home Active
             switchTab('view-home', document.getElementById('nav-home'), 'Accueil');
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) userConnected(session.user);
@@ -346,19 +363,11 @@
             programsToShow.forEach((prog, pIdx) => {
                 const isCoachProg = prog.source === 'coach';
                 const border = isCoachProg ? 'border-app-accent' : 'border-gray-800';
-                
-                // Duplicate button logic (only if coach looking at self or athlete looking at self, or coach looking at athlete)
                 const copyBtn = `<button onclick="event.stopPropagation(); duplicateProgram(${pIdx})" class="text-gray-400 hover:text-white ml-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>`;
 
                 libContainer.innerHTML += `
                     <div class="bg-app-card p-4 rounded-xl border ${border} mb-3">
-                        <div class="flex justify-between items-center mb-2">
-                            <h4 class="font-bold text-white">${prog.name}</h4>
-                            <div class="flex items-center">
-                                ${isCoachProg ? '<span class="text-[10px] bg-app-accent px-2 rounded text-white mr-2">COACH</span>' : ''}
-                                ${copyBtn}
-                            </div>
-                        </div>
+                        <div class="flex justify-between items-center mb-2"><h4 class="font-bold text-white">${prog.name}</h4><div class="flex items-center">${isCoachProg ? '<span class="text-[10px] bg-app-accent px-2 rounded text-white mr-2">COACH</span>' : ''}${copyBtn}</div></div>
                         <div class="space-y-1">${prog.sessions.map((s, sIdx) => `<div onclick="openPreview(${pIdx}, ${sIdx})" class="text-sm text-gray-400 hover:text-white flex justify-between bg-gray-900/50 p-2 rounded cursor-pointer"><span>${s.name}</span><span>➤</span></div>`).join('')}</div>
                     </div>`;
 
@@ -374,10 +383,7 @@
             const copy = JSON.parse(JSON.stringify(original));
             copy.name += " (Copie)";
             dataSrc.programs.push(copy);
-            
-            if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id);
-            else syncData();
-            
+            if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id); else syncData();
             updateUI();
         }
 
@@ -413,27 +419,97 @@
             }
         }
 
-        // CREATION
+        // CREATION & EDIT
         let tempSessionStack = [], tempExercises = [];
+        
         function addExerciseToTemp() {
             const name = document.getElementById('exo-name').value; if(!name) return;
             tempExercises.push({ name, format: document.getElementById('exo-format').value, sets: document.getElementById('exo-sets').value, reps: document.getElementById('exo-reps').value, rest: document.getElementById('exo-rest').value, rpe: document.getElementById('exo-rpe').value, load: document.getElementById('exo-load').value, note: document.getElementById('exo-note').value });
-            document.getElementById('temp-exercises-list').innerHTML = tempExercises.map(e=>`<div class="text-xs text-gray-400 border-l-2 border-app-accent pl-2 mb-1">${e.name} (${e.format})</div>`).join('');
+            renderTempExos();
             document.getElementById('exo-name').value = ''; document.getElementById('exo-format').value = '';
         }
+        
+        function renderTempExos() {
+            document.getElementById('temp-exercises-list').innerHTML = tempExercises.map(e=>`<div class="text-xs text-gray-400 border-l-2 border-app-accent pl-2 mb-1">${e.name} (${e.format || '-'})</div>`).join('');
+        }
+
         function addSessionToStack() {
             const name = document.getElementById('session-name').value; if(!name) return;
             tempSessionStack.push({name, exercises: [...tempExercises]});
-            tempExercises = []; document.getElementById('temp-exercises-list').innerHTML = ''; document.getElementById('session-name').value = '';
+            tempExercises = []; renderTempExos(); document.getElementById('session-name').value = '';
             document.getElementById('added-sessions-list').innerHTML = tempSessionStack.map(s=>`<div class="bg-gray-800 p-2 rounded text-sm text-white">${s.name}</div>`).join('');
         }
+        
         async function saveFullProgram() {
             const name = document.getElementById('program-name').value;
             if(!name || tempSessionStack.length === 0) return alert("Incomplet");
             const newProg = { name: name, source: currentCoachTarget ? 'coach' : 'personal', sessions: tempSessionStack };
-            if(currentCoachTarget) { currentCoachTarget.content.programs.push(newProg); await syncData(currentCoachTarget.content, currentCoachTarget.user_id); alert(`Envoyé à ${currentCoachTarget.content.profile.prenom}`); } 
+            if(currentCoachTarget) { currentCoachTarget.content.programs.push(newProg); await syncData(currentCoachTarget.content, currentCoachTarget.user_id); alert("Envoyé"); } 
             else { userData.programs.push(newProg); syncData(); }
-            tempSessionStack = []; document.getElementById('program-name').value = ''; document.getElementById('added-sessions-list').innerHTML = ''; switchTab('view-home', null, 'Accueil');
+            resetAddView(); switchTab('view-library', null, 'Bibliothèque');
+        }
+
+        // EDIT SESSION FEATURE
+        function editSessionFromPreview() {
+            isEditingMode = true;
+            closePreview();
+            
+            const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
+            const sess = dataSrc.programs[currentProgramIndex].sessions[currentPreviewSessionIndex];
+            
+            // Populate Add View
+            document.getElementById('session-name').value = sess.name;
+            tempExercises = [...sess.exercises];
+            renderTempExos();
+            
+            // Hide Program Inputs, Show Update Btn
+            document.getElementById('program-name-container').classList.add('hidden');
+            document.getElementById('added-sessions-list').classList.add('hidden');
+            document.getElementById('btn-validate-session').classList.add('hidden');
+            document.getElementById('btn-save-program').classList.add('hidden');
+            document.getElementById('btn-update-session').classList.remove('hidden');
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+            document.getElementById('add-mode-label').innerText = "Modifier Séance";
+            
+            switchTab('view-add', null, 'Modification');
+        }
+
+        async function saveEditedSession() {
+            const newName = document.getElementById('session-name').value;
+            if(!newName) return alert("Nom requis");
+            
+            const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
+            const userId = currentCoachTarget ? currentCoachTarget.user_id : currentUser.id;
+            
+            // Update in place
+            dataSrc.programs[currentProgramIndex].sessions[currentPreviewSessionIndex] = {
+                name: newName,
+                exercises: [...tempExercises]
+            };
+            
+            await syncData(dataSrc, userId);
+            alert("Séance mise à jour !");
+            resetAddView();
+            switchTab('view-library', null, 'Bibliothèque');
+        }
+
+        function cancelEdit() { resetAddView(); switchTab('view-library', null, 'Bibliothèque'); }
+
+        function resetAddView() {
+            isEditingMode = false;
+            tempSessionStack = []; tempExercises = [];
+            document.getElementById('session-name').value = '';
+            document.getElementById('program-name').value = '';
+            document.getElementById('temp-exercises-list').innerHTML = '';
+            document.getElementById('added-sessions-list').innerHTML = '';
+            
+            document.getElementById('program-name-container').classList.remove('hidden');
+            document.getElementById('added-sessions-list').classList.remove('hidden');
+            document.getElementById('btn-validate-session').classList.remove('hidden');
+            document.getElementById('btn-save-program').classList.remove('hidden');
+            document.getElementById('btn-update-session').classList.add('hidden');
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+            document.getElementById('add-mode-label').innerText = "Nouveau Programme";
         }
 
         // PREVIEW
@@ -466,26 +542,32 @@
             document.getElementById('workout-timer-display').classList.remove('hidden');
             document.getElementById('active-workout-container').innerHTML = `<h2 class="text-2xl text-white font-bold mb-6">${sess.name}</h2>` + 
                 sess.exercises.map((exo, idx) => {
-                    let rows = ''; for(let i=1; i<=exo.sets; i++) rows += `<div class="grid grid-cols-10 gap-2 items-center mb-2" id="set-row-${idx}-${i}"><div class="col-span-1 text-center font-bold text-gray-500">${i}</div><div class="col-span-3"><input type="number" class="w-full bg-gray-900 rounded border border-gray-700 text-center py-2 text-white font-bold" placeholder="${exo.load || '-'}"></div><div class="col-span-3"><input type="number" class="w-full bg-gray-900 rounded border border-gray-700 text-center py-2 text-white font-bold" placeholder="${exo.reps}"></div><div class="col-span-3 flex justify-center"><button onclick="validateSet(this, ${idx}, ${i})" class="w-full bg-gray-800 hover:bg-app-success hover:text-black text-gray-400 rounded py-2 transition font-bold text-xs">RPE</button></div></div>`;
+                    let rows = ''; for(let i=1; i<=exo.sets; i++) rows += `<div class="grid grid-cols-10 gap-2 items-center mb-2" id="set-row-${idx}-${i}"><div class="col-span-1 text-center font-bold text-gray-500">${i}</div><div class="col-span-3"><input type="number" class="w-full bg-gray-900 rounded border border-gray-700 text-center py-2 text-white font-bold" placeholder="${exo.load || '-'}"></div><div class="col-span-3"><input type="number" class="w-full bg-gray-900 rounded border border-gray-700 text-center py-2 text-white font-bold" placeholder="${exo.reps}"></div><div class="col-span-3 flex justify-center"><button onclick="validateSet(this, ${idx}, ${i})" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-400 rounded py-2 transition font-bold text-xs border border-gray-600">RPE</button></div></div>`;
                     return `<div class="bg-app-card rounded-xl border border-gray-800 overflow-hidden mb-6"><div class="bg-gray-800/50 p-3 border-b border-gray-800"><div class="flex justify-between items-center mb-1"><h3 class="font-bold text-lg text-white">${exo.name}</h3><span class="${exo.format==='Top Set'?'text-app-topSet':'text-gray-400'} text-xs font-bold uppercase">${exo.format || ''}</span></div><div class="flex gap-4 text-xs text-gray-400"><span>Obj: ${exo.load || '-'}</span><span>${exo.sets}x${exo.reps}</span><span>RPE ${exo.rpe}</span></div></div><div class="p-3"><div class="grid grid-cols-10 gap-2 text-[10px] text-gray-500 mb-2 text-center uppercase font-bold tracking-wider"><div class="col-span-1">#</div><div class="col-span-3">KG</div><div class="col-span-3">REPS</div><div class="col-span-3">RPE</div></div>${rows}</div></div>`;
                 }).join('');
             let sec = 0; clearInterval(workoutInterval); workoutInterval = setInterval(() => { sec++; document.getElementById('active-timer').innerText = new Date(sec * 1000).toISOString().substr(14, 5); document.getElementById('timer-val').innerText = document.getElementById('active-timer').innerText; }, 1000);
         }
-        function validateSet(btn, exoIdx, setIdx) { const rpe = prompt("RPE (1-10)?", "8"); if(rpe) { btn.innerText = "✓"; btn.classList.add('bg-app-success', 'text-black'); const row = document.getElementById(`set-row-${exoIdx}-${setIdx}`); row.dataset.performed = JSON.stringify({ kg: row.querySelectorAll('input')[0].value || 0, reps: row.querySelectorAll('input')[1].value || 0, rpe }); } }
+        function validateSet(btn, exoIdx, setIdx) { 
+            const rpe = prompt("RPE (1-10)?", "8"); 
+            if(rpe) { 
+                btn.innerText = "✓"; 
+                // Force styling to stay green
+                btn.className = "w-full rounded py-2 font-bold text-xs btn-validated";
+                const row = document.getElementById(`set-row-${exoIdx}-${setIdx}`); 
+                row.dataset.performed = JSON.stringify({ kg: row.querySelectorAll('input')[0].value || 0, reps: row.querySelectorAll('input')[1].value || 0, rpe }); 
+            } 
+        }
         function finishWorkout() {
             if(!confirm("Terminer ?")) return; clearInterval(workoutInterval); document.getElementById('view-active-workout').classList.add('hidden'); document.getElementById('workout-timer-display').classList.add('hidden');
             let vol = 0; const dateKey = new Date().toISOString().split('T')[0];
             const sessionRes = { title: document.querySelector('#active-workout-container h2').innerText, duration: document.getElementById('active-timer').innerText, exercises: [] };
-            document.querySelectorAll('[id^="set-row-"]').forEach(row => { 
-                if(row.dataset.performed) { 
-                    const p = JSON.parse(row.dataset.performed); 
-                    vol += parseFloat(p.kg) * parseFloat(p.reps); 
-                    // Populate exercise name via DOM traversal is complex, simpler: push generic and re-structure later. 
-                    // Better: In V15 we would structure history better. Here we focus on volume calc.
-                } 
-            });
-            // Push history properly with Exercise Names from activeSessionExercises
-            // (Skipped deep implementation for brevity, relying on volume)
+            document.querySelectorAll('[id^="set-row-"]').forEach(row => { if(row.dataset.performed) { const p = JSON.parse(row.dataset.performed); vol += parseFloat(p.kg) * parseFloat(p.reps); 
+                // Store exercises for stats
+                const exoName = row.closest('.bg-app-card').querySelector('h3').innerText;
+                let existingExo = sessionRes.exercises.find(e => e.name === exoName);
+                if(!existingExo) { existingExo = {name: exoName, sets: []}; sessionRes.exercises.push(existingExo); }
+                existingExo.sets.push(p);
+            } });
             if(!userData.history[dateKey]) userData.history[dateKey] = []; userData.history[dateKey].push(sessionRes);
             userData.stats.sessions++; userData.stats.volume += vol;
             syncData(); updateUI(); updateStatsDropdown(); switchTab('view-stats', null, 'Statistiques');
@@ -495,10 +577,17 @@
 
         // CHARTS
         function updateStatsDropdown() {
-            const sel = document.getElementById('stats-exo-select'); sel.innerHTML = '<option>Exo</option>'; const exos = new Set();
-            // In a real app we parse history.exercises. Here simplified.
+            const sel = document.getElementById('stats-exo-select'); sel.innerHTML = '<option>Choisir...</option>'; const exos = new Set();
+            Object.values(userData.history).flat().forEach(s => { if(s.exercises) s.exercises.forEach(e => exos.add(e.name)) });
+            exos.forEach(name => sel.innerHTML += `<option>${name}</option>`);
         }
-        function renderChart() { /* ... */ }
+        function renderChart() { 
+            const exoName = document.getElementById('stats-exo-select').value; const ctx = document.getElementById('progressionChart').getContext('2d');
+            const dataPoints = []; Object.entries(userData.history).forEach(([date, sessions]) => { sessions.forEach(sess => { if(sess.exercises) { const exoData = sess.exercises.find(e => e.name === exoName); if(exoData) { const maxWeight = Math.max(...exoData.sets.map(s => parseFloat(s.kg))); dataPoints.push({ x: date, y: maxWeight }); } } }); });
+            dataPoints.sort((a,b) => new Date(a.x) - new Date(b.x));
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, { type: 'line', data: { labels: dataPoints.map(d => d.x), datasets: [{ label: 'Charge Max (kg)', data: dataPoints.map(d => d.y), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', tension: 0.3, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } }, plugins: { legend: { labels: { color: 'white' } } } } });
+        }
 
         // UTILS
         function switchTab(viewId, btnElement, title) {
