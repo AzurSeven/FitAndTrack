@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fitness App Pro - V22 Stable</title>
+    <title>Fitness App Pro - V21.2 Stable</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -40,7 +40,7 @@
 
     <div id="cloud-toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-[110] bg-gray-800 border border-gray-600 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 toast-hidden">
         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <span class="text-xs font-bold text-white">Synchronisé</span>
+        <span class="text-xs font-bold text-white">Sauvegarde...</span>
     </div>
 
     <section id="view-auth" class="fixed inset-0 z-[100] bg-[#0f0f0f] flex flex-col items-center justify-center p-6 transition-all duration-500 overflow-y-auto">
@@ -72,9 +72,6 @@
     <header class="sticky top-0 z-50 bg-app-bg/95 backdrop-blur-sm p-4 border-b border-gray-800 flex justify-between items-center h-16">
         <h1 id="page-title" class="text-xl font-bold tracking-tight">Accueil</h1>
         <div class="flex items-center gap-3">
-            <button onclick="window.location.reload()" class="text-gray-400 hover:text-white p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
-            </button>
             <button id="header-add-btn" onclick="switchTab('view-add', null, 'Création')" class="hidden bg-app-accent hover:bg-white hover:text-black text-white w-8 h-8 rounded-full flex items-center justify-center transition shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
             </button>
@@ -143,7 +140,9 @@
                 <div class="absolute -top-3 left-3 bg-app-card px-2 text-xs text-gray-400 font-bold border border-gray-800 rounded">Éditeur Séance</div>
                 <div class="space-y-4 mt-2">
                     <input type="text" id="session-name" placeholder="Nom Séance (ex: Legs)" class="w-full bg-gray-900 rounded-lg p-3 text-sm border border-gray-700 focus:border-app-accent outline-none text-white font-bold">
+                    
                     <div id="temp-exercises-list" class="space-y-2"></div>
+                    
                     <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-800 space-y-3">
                         <div class="grid grid-cols-2 gap-2">
                             <input type="text" id="exo-name" placeholder="Nom Exercice" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none">
@@ -167,9 +166,11 @@
                         </div>
                         <button onclick="addExerciseToTemp()" id="btn-add-exo" class="w-full bg-gray-700 hover:bg-white hover:text-black text-white text-xs py-2 rounded font-bold transition">+ Ajouter Ligne</button>
                     </div>
+
                     <button onclick="addSessionToStack()" id="btn-validate-session" class="w-full py-3 bg-app-accent/20 text-app-accent border border-app-accent/50 hover:bg-app-accent hover:text-white text-sm font-bold rounded-lg transition">Ajouter cette séance</button>
                 </div>
             </div>
+
             <button type="button" onclick="saveFullProgram()" id="btn-save-program" class="w-full bg-white text-black font-bold py-4 rounded-xl shadow-lg mt-8 mb-4">Sauvegarder le Programme</button>
         </section>
 
@@ -177,7 +178,7 @@
             <div class="flex justify-between items-center mb-6">
                 <button onclick="closePreview()" class="text-gray-400 hover:text-white">✕ Fermer</button>
                 <div class="flex gap-2">
-                    <button onclick="editSessionFromPreview()" class="text-app-accent text-sm border border-app-accent/30 px-3 py-1 rounded hover:bg-app-accent/10">Modifier ✏️</button>
+                    <button id="btn-edit-session" onclick="editSessionFromPreview()" class="text-app-accent text-sm border border-app-accent/30 px-3 py-1 rounded hover:bg-app-accent/10">Modifier ✏️</button>
                     <button id="btn-delete-session" onclick="deleteSessionFromPreview()" class="text-app-danger text-sm border border-app-danger/30 px-3 py-1 rounded hover:bg-app-danger/10">Supprimer</button>
                 </div>
             </div>
@@ -347,11 +348,9 @@
         
         window.onload = async function() {
             switchTab('view-home', document.getElementById('nav-home'), 'Accueil');
-            
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN' && session) userConnected(session.user);
             });
-
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) userConnected(session.user);
         }
@@ -360,7 +359,6 @@
             ['auth-login-container', 'auth-register-container'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById(`auth-${mode}-container`).classList.remove('hidden');
         }
-
         async function loginUser() {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
@@ -368,16 +366,13 @@
             if (error) document.getElementById('auth-message').innerText = error.message;
             else userConnected(data.user);
         }
-
         async function registerUser() {
             const email = document.getElementById('reg-email').value;
             const pass = document.getElementById('reg-pass').value;
             const pseudo = document.getElementById('reg-pseudo').value;
             const fname = document.getElementById('reg-fname').value;
             const lname = document.getElementById('reg-lname').value;
-            
             if(!pseudo || !fname || !lname) return alert("Tous les champs requis");
-
             const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
             if (error) document.getElementById('auth-message').innerText = error.message;
             else { 
@@ -388,13 +383,7 @@
                 } else alert("Vérifie tes mails !"); 
             }
         }
-
-        function userConnected(user) { 
-            currentUser = user; 
-            document.getElementById('view-auth').classList.add('hidden'); 
-            loadUserData(); 
-        }
-        
+        function userConnected(user) { currentUser = user; document.getElementById('view-auth').classList.add('hidden'); loadUserData(); }
         async function logout() { await supabaseClient.auth.signOut(); window.location.reload(); }
 
         async function loadUserData() {
@@ -409,7 +398,6 @@
             }
             initCalendar(new Date().toISOString().split('T')[0]);
         }
-
         async function syncData(targetUserData = null, targetUserId = null) {
             const t = document.getElementById('cloud-toast');
             t.classList.remove('toast-hidden'); t.classList.add('toast-visible');
@@ -437,10 +425,8 @@
                 document.getElementById('coach-team-section').classList.add('hidden');
                 document.getElementById('coach-selector-container').classList.add('hidden');
             }
-
             document.getElementById('stat-volume').innerText = parseFloat(userData.stats.volume).toFixed(1) + " kg";
             document.getElementById('stat-sessions').innerText = userData.stats.sessions;
-
             renderProgramLists();
             renderTeamList();
         }
@@ -475,6 +461,7 @@
                         <div class="space-y-1">${prog.sessions.map((s, sIdx) => `
                             <div class="flex justify-between items-center bg-gray-900/50 p-3 rounded">
                                 <div onclick="openPreview(${pIdx}, ${sIdx})" class="flex-grow text-sm text-gray-400 hover:text-white cursor-pointer">${s.name}</div>
+                                <button onclick="editSessionFromList(${pIdx}, ${sIdx})" class="text-xs text-app-accent bg-gray-800 px-2 py-1 rounded ml-2">Modif.</button>
                             </div>`).join('')}
                         </div>
                     </div>`;
@@ -488,12 +475,7 @@
         function renameProgram(pIdx) {
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
             const newName = prompt("Nouveau nom :", dataSrc.programs[pIdx].name);
-            if(newName) { 
-                dataSrc.programs[pIdx].name = newName; 
-                if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id); 
-                else syncData(); 
-                updateUI(); 
-            }
+            if(newName) { dataSrc.programs[pIdx].name = newName; if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id); else syncData(); updateUI(); }
         }
         function duplicateProgram(pIdx) {
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
@@ -508,7 +490,8 @@
             const email = document.getElementById('invite-email').value; if(!email) return;
             let { data } = await supabaseClient.from('user_data').select('user_id, content').contains('content', { profile: { email: email } }).maybeSingle();
             if(data) {
-                const p = data.content.profile; if(userData.team.some(m => m.uid === data.user_id)) return alert("Déjà dans l'équipe");
+                const p = data.content.profile;
+                if(userData.team.some(m => m.uid === data.user_id)) return alert("Déjà dans l'équipe");
                 userData.team.push({ email: p.email, nom: p.nom, prenom: p.prenom, uid: data.user_id });
                 syncData(); updateUI(); populateCoachSelector(); document.getElementById('invite-email').value = ''; alert(`${p.prenom} ajouté !`);
             } else { alert("Aucun compte trouvé avec cet email."); }
@@ -516,7 +499,7 @@
         function populateCoachSelector() { const sel = document.getElementById('coach-athlete-select'); sel.innerHTML = '<option value="me">👤 Mon Espace Perso</option>'; userData.team.forEach(m => { sel.innerHTML += `<option value="${m.uid}">🏃 ${m.prenom} ${m.nom}</option>`; }); }
         async function changeCoachTarget() { const targetId = document.getElementById('coach-athlete-select').value; if(targetId === 'me') { currentCoachTarget = null; document.getElementById('lib-title').innerText = "Mes Programmes"; updateUI(); } else { let { data } = await supabaseClient.from('user_data').select('user_id, content').eq('user_id', targetId).single(); if(data) { currentCoachTarget = data; document.getElementById('lib-title').innerText = "Prog. de " + data.content.profile.prenom; renderProgramLists(); } } }
 
-        // --- SMART CREATION & EDITING ---
+        // SMART CREATION & EDITING
         function loadProgramForEdit(pIdx) {
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
             const prog = dataSrc.programs[pIdx];
@@ -554,13 +537,29 @@
 
         function addSessionToStack() { 
             const name = document.getElementById('session-name').value; if(!name) return; 
-            if(editingSessionIndex !== null) { tempSessionStack[editingSessionIndex] = { name, exercises: [...tempExercises] }; editingSessionIndex = null; document.getElementById('btn-validate-session').innerText = "Ajouter cette séance"; } 
-            else { tempSessionStack.push({name, exercises: [...tempExercises]}); }
+            // UNIFIED LOGIC FOR SESSION ADD/EDIT IN STACK
+            if(editingSessionIndex !== null) {
+                // Replace session in stack
+                tempSessionStack[editingSessionIndex] = { name, exercises: [...tempExercises] };
+                editingSessionIndex = null;
+                document.getElementById('btn-validate-session').innerText = "Ajouter cette séance";
+            } else {
+                // Add new session
+                tempSessionStack.push({name, exercises: [...tempExercises]}); 
+            }
             tempExercises = []; renderTempExos(); document.getElementById('session-name').value = ''; renderSessionStackUI(); 
         }
         function renderSessionStackUI() { document.getElementById('added-sessions-list').innerHTML = tempSessionStack.map((s, idx) => `<div class="bg-gray-800 border-l-4 border-app-success p-2 rounded mb-2 flex justify-between cursor-pointer" onclick="loadSessionFromStack(${idx})"><div class="text-sm text-white">${s.name} <span class="text-xs text-gray-500">(${s.exercises.length} exos)</span></div><button onclick="event.stopPropagation(); removeSessionFromStack(${idx})" class="text-red-400 text-xs">✕</button></div>`).join(''); }
         function removeSessionFromStack(idx) { tempSessionStack.splice(idx, 1); renderSessionStackUI(); }
-        function loadSessionFromStack(idx) { editingSessionIndex = idx; const s = tempSessionStack[idx]; document.getElementById('session-name').value = s.name; tempExercises = JSON.parse(JSON.stringify(s.exercises)); renderTempExos(); document.getElementById('btn-validate-session').innerText = "Mettre à jour la séance"; }
+        function loadSessionFromStack(idx) {
+            // THIS IS THE FUNCTION TO EDIT SESSION FROM STACK
+            editingSessionIndex = idx;
+            const s = tempSessionStack[idx];
+            document.getElementById('session-name').value = s.name;
+            tempExercises = JSON.parse(JSON.stringify(s.exercises));
+            renderTempExos();
+            document.getElementById('btn-validate-session').innerText = "Mettre à jour la séance";
+        }
 
         async function saveFullProgram() {
             const name = document.getElementById('program-name').value;
@@ -569,8 +568,8 @@
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
             const targetUserId = currentCoachTarget ? currentCoachTarget.user_id : currentUser.id;
 
-            if(isEditingMode && editingProgramIndex !== null) dataSrc.programs[editingProgramIndex] = newProg;
-            else dataSrc.programs.push(newProg);
+            if(isEditingMode && editingProgramIndex !== null) dataSrc.programs[editingProgramIndex] = newProg; // UPDATE
+            else dataSrc.programs.push(newProg); // CREATE
 
             await syncData(dataSrc, targetUserId);
             resetAddView(); switchTab('view-library', null, 'Bibliothèque');
@@ -601,7 +600,14 @@
             const btnEdit = document.getElementById('btn-edit-session');
             const canEdit = userData.profile.role === 'coach' || dataSrc.programs[pIdx].source !== 'coach';
             if(canEdit) { btnDel.classList.remove('hidden'); btnEdit.classList.remove('hidden'); } else { btnDel.classList.add('hidden'); btnEdit.classList.add('hidden'); }
-            document.getElementById('preview-exo-list').innerHTML = sess.exercises.map(e => `<div class="bg-gray-800 rounded p-3 border border-gray-700"><div class="flex justify-between items-start mb-1"><div><span class="font-bold text-white text-lg block">${e.name}</span><span class="${e.format==='Top Set'?'text-app-topSet':'text-gray-400'} text-xs font-bold uppercase">${e.format || ''}</span></div><span class="text-xs bg-gray-700 px-2 rounded text-gray-300">RPE ${e.rpe}</span></div><div class="text-xs text-gray-400">${e.sets} x ${e.reps} • ${e.rest}</div></div>`).join('');
+            document.getElementById('preview-exo-list').innerHTML = sess.exercises.map(e => `
+                <div class="bg-gray-800 rounded p-3 border border-gray-700">
+                    <div class="flex justify-between items-start mb-1">
+                        <div><span class="font-bold text-white text-lg block">${e.name}</span><span class="${e.format==='Top Set'?'text-app-topSet':'text-gray-400'} text-xs font-bold uppercase">${e.format || ''}</span></div>
+                        <span class="text-xs bg-gray-700 px-2 rounded text-gray-300">RPE ${e.rpe}</span>
+                    </div>
+                    <div class="text-xs text-gray-400">${e.sets} x ${e.reps} • ${e.rest}</div>
+                </div>`).join('');
             document.getElementById('view-preview').classList.remove('hidden');
         }
         function closePreview() { document.getElementById('view-preview').classList.add('hidden'); }
