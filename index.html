@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fitness App Pro - V15.5 Smart</title>
+    <title>Fitness App Pro - V15.6 (Strict)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -25,7 +25,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         
-        /* Nav Active State */
+        /* Nav Active State V15 */
         .nav-btn { color: #6b7280; transition: all 0.3s ease; }
         .nav-btn.active { color: #8b5cf6 !important; } 
         .nav-btn.active svg { filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6)); transform: scale(1.15); }
@@ -147,8 +147,9 @@
                     
                     <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-800 space-y-3">
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="exo-name" placeholder="Nom Exercice" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none focus:border-app-accent">
-                            <select id="exo-format" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none font-bold text-app-accent appearance-none">
+                            <input type="text" id="exo-name" placeholder="Nom Exercice" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none">
+                            
+                            <select id="exo-format" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none font-bold text-app-accent">
                                 <option value="Straight Set">Straight Set</option>
                                 <option value="Top Set">Top Set</option>
                                 <option value="Back Off">Back Off</option>
@@ -173,7 +174,7 @@
                 </div>
             </div>
 
-            <button type="button" onclick="saveFullProgram()" id="btn-save-program" class="w-full bg-white text-black font-bold py-4 rounded-xl shadow-lg mt-8 mb-4">Sauvegarder Tout</button>
+            <button type="button" onclick="saveFullProgram()" id="btn-save-program" class="w-full bg-white text-black font-bold py-4 rounded-xl shadow-lg mt-8 mb-4">Sauvegarder le Programme</button>
             <button type="button" onclick="saveEditedSession()" id="btn-update-session" class="hidden w-full bg-green-500 hover:bg-green-400 text-black font-bold py-4 rounded-xl shadow-lg mt-8 mb-4">Mettre à jour la séance</button>
         </section>
 
@@ -214,7 +215,7 @@
         <section id="view-profile" class="view-section hidden fade-in">
             <h2 class="text-lg font-bold mb-4">Profil</h2>
             <div class="bg-app-card rounded-xl p-6 border border-gray-800 mb-6 text-center">
-                <div class="w-20 h-20 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-white shadow-lg" id="profile-avatar">?</div>
+                <div class="w-20 h-20 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-white" id="profile-avatar">?</div>
                 <h3 class="text-2xl font-bold text-white" id="profile-pseudo">...</h3>
                 <p class="text-sm text-gray-400 mt-1" id="profile-email">...</p>
                 <span id="profile-role-badge" class="mt-3 inline-block bg-gray-800 text-xs px-3 py-1 rounded-full text-app-accent border border-gray-700">Athlète</span>
@@ -223,14 +224,14 @@
             <div id="coach-upgrade-section" class="bg-app-card rounded-xl p-4 border border-gray-800 mb-6">
                 <h3 class="text-sm font-bold text-white mb-2">Espace Coach</h3>
                 <div class="flex gap-2">
-                    <input type="text" id="coach-code-input" placeholder="CODE" class="flex-grow bg-app-input rounded-lg px-3 py-3 text-sm text-white outline-none border border-gray-700">
+                    <input type="text" id="coach-code-input" placeholder="CODE" class="flex-grow bg-app-input rounded-lg px-3 py-2 text-sm text-white outline-none border border-gray-700">
                     <button onclick="attemptUpgradeCoach()" class="bg-app-accent text-white text-xs font-bold px-4 rounded-lg">OK</button>
                 </div>
             </div>
             <div id="coach-team-section" class="hidden bg-app-card rounded-xl p-4 border border-app-accent/30 mb-6">
                 <h3 class="text-sm font-bold text-app-accent mb-2">Mon Équipe</h3>
                 <div class="flex gap-2 mb-4">
-                    <input type="email" id="invite-email" placeholder="Email" class="flex-grow bg-app-input rounded-lg px-3 py-3 text-sm text-white outline-none border border-gray-700">
+                    <input type="email" id="invite-email" placeholder="Email" class="flex-grow bg-app-input rounded-lg px-3 py-2 text-sm text-white outline-none border border-gray-700">
                     <button onclick="inviteAthlete()" class="bg-white text-black text-xs font-bold px-4 rounded-lg">Add</button>
                 </div>
                 <div id="team-list-display" class="space-y-2"></div>
@@ -239,13 +240,13 @@
 
     </main>
 
-    <nav class="fixed bottom-0 w-full bg-app-card border-t border-gray-800 pb-safe z-40 h-16 shadow-2xl">
+    <nav class="fixed bottom-0 w-full bg-app-card border-t border-gray-800 pb-safe z-40 h-16">
         <div class="flex justify-around items-center h-full px-2">
-            <button onclick="switchTab('view-calendar', this, 'Calendrier')" id="nav-cal" class="nav-btn p-3 w-1/5 flex justify-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg></button>
-            <button onclick="switchTab('view-stats', this, 'Statistiques')" id="nav-stats" class="nav-btn p-3 w-1/5 flex justify-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg></button>
-            <button onclick="switchTab('view-home', this, 'Accueil')" id="nav-home" class="nav-btn p-3 w-1/5 flex justify-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg></button>
-            <button onclick="switchTab('view-library', this, 'Bibliothèque')" id="nav-lib" class="nav-btn p-3 w-1/5 flex justify-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg></button>
-            <button onclick="switchTab('view-profile', this, 'Profil')" id="nav-prof" class="nav-btn p-3 w-1/5 flex justify-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg></button>
+            <button onclick="switchTab('view-calendar', this, 'Calendrier')" id="nav-cal" class="nav-btn flex flex-col items-center p-2 w-16"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mb-0.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg><span class="text-[10px]">Agenda</span></button>
+            <button onclick="switchTab('view-stats', this, 'Statistiques')" id="nav-stats" class="nav-btn flex flex-col items-center p-2 w-16"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mb-0.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg><span class="text-[10px]">Stats</span></button>
+            <button onclick="switchTab('view-home', this, 'Accueil')" id="nav-home" class="nav-btn active text-app-accent flex flex-col items-center p-2 w-16"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mb-0.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg><span class="text-[10px]">Accueil</span></button>
+            <button onclick="switchTab('view-library', this, 'Bibliothèque')" id="nav-lib" class="nav-btn flex flex-col items-center p-2 w-16"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mb-0.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg><span class="text-[10px]">Library</span></button>
+            <button onclick="switchTab('view-profile', this, 'Profil')" id="nav-prof" class="nav-btn flex flex-col items-center p-2 w-16"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mb-0.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg><span class="text-[10px]">Profil</span></button>
         </div>
     </nav>
 
@@ -432,7 +433,7 @@
             tempExercises.push({ name, format, sets: document.getElementById('exo-sets').value, reps: document.getElementById('exo-reps').value, rest: document.getElementById('exo-rest').value, rpe: document.getElementById('exo-rpe').value, load: document.getElementById('exo-load').value, note: document.getElementById('exo-note').value });
             renderTempExos();
 
-            // SMART LOGIC
+            // SMART LOGIC: If Top Set -> Switch to Back Off and keep name
             if(format === "Top Set") {
                 document.getElementById('exo-format').value = "Back Off";
                 document.getElementById('exo-sets').value = "";
@@ -516,7 +517,7 @@
         function validateSet(btn, exoIdx, setIdx) { 
             const rpe = prompt("RPE (1-10)?", "8"); 
             if(rpe) { 
-                btn.innerText = "✓"; btn.className = "w-full rounded py-3 font-bold text-sm btn-validated";
+                btn.innerText = "✓"; btn.className = "w-full rounded py-3 font-bold text-sm btn-validated"; // Apply fixed class
                 const row = document.getElementById(`set-row-${exoIdx}-${setIdx}`); 
                 row.dataset.performed = JSON.stringify({ kg: row.querySelectorAll('input')[0].value || 0, reps: row.querySelectorAll('input')[1].value || 0, rpe }); 
             } 
@@ -544,7 +545,7 @@
         function minimizeWorkout() { document.getElementById('view-active-workout').classList.add('hidden'); }
         function returnToActiveWorkout() { document.getElementById('view-active-workout').classList.remove('hidden'); }
 
-        // CHARTS & CALENDAR
+        // CHARTS & CALENDAR DETAILS
         function updateStatsDropdown() {
             const sel = document.getElementById('stats-exo-select'); sel.innerHTML = '<option>Choisir...</option>'; const exos = new Set();
             Object.values(userData.history).flat().forEach(s => { if(s.exercises) s.exercises.forEach(e => exos.add(e.name)) });
