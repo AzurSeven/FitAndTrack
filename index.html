@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f0f0f">
-    <title>Fitness App Pro - V17 (Smart Input)</title>
+    <title>Fitness App Pro - V17 (Smart Workflow)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -24,16 +24,22 @@
     </script>
     <style>
         body { -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
-        input, textarea { user-select: text; -webkit-user-select: text; }
+        input, textarea, select { user-select: text; -webkit-user-select: text; }
+        
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .fade-in { animation: fadeIn 0.25s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Remove arrows on number input */
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
         .nav-btn { color: #6b7280; transition: all 0.3s ease; }
         .nav-btn.active { color: #8b5cf6 !important; } 
-        .nav-btn.active svg { filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6)); transform: scale(1.15); }
+        .nav-btn.active svg { filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4)); transform: scale(1.1); transition: transform 0.2s; }
+        
         .btn-validated { background-color: #22c55e !important; color: black !important; border-color: #22c55e !important; transform: scale(0.98); }
+
         #cloud-toast { transition: opacity 0.3s ease, transform 0.3s ease; }
         .toast-hidden { opacity: 0; transform: translateY(-20px); pointer-events: none; }
         .toast-visible { opacity: 1; transform: translateY(0); }
@@ -361,6 +367,7 @@
             programsToShow.forEach((prog, pIdx) => {
                 const isCoachProg = prog.source === 'coach';
                 const border = isCoachProg ? 'border-app-accent' : 'border-gray-800';
+                
                 const copyBtn = `<button onclick="event.stopPropagation(); duplicateProgram(${pIdx})" class="text-gray-400 hover:text-white ml-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>`;
 
                 libContainer.innerHTML += `
@@ -438,16 +445,13 @@
             tempExercises.push({ name, format, sets: document.getElementById('exo-sets').value, reps: document.getElementById('exo-reps').value, rest: document.getElementById('exo-rest').value, rpe: document.getElementById('exo-rpe').value, load: document.getElementById('exo-load').value, note: document.getElementById('exo-note').value });
             renderTempExos();
 
-            // LOGIC SMART FILL
             if(format === "Top Set") {
-                // Keep name, Switch to Back Off, Clear Load
                 document.getElementById('exo-format').value = "Back Off";
                 document.getElementById('exo-sets').value = "";
                 document.getElementById('exo-load').value = "";
             } else {
-                // Clear Name & Format
                 document.getElementById('exo-name').value = "";
-                document.getElementById('exo-format').value = "Straight Set";
+                document.getElementById('exo-format').value = "";
                 document.getElementById('exo-sets').value = "";
                 document.getElementById('exo-load').value = "";
             }
@@ -524,7 +528,7 @@
         function validateSet(btn, exoIdx, setIdx) { 
             const rpe = prompt("RPE (1-10)?", "8"); 
             if(rpe) { 
-                btn.innerText = "✓"; btn.className = "w-full rounded py-3 font-bold text-sm btn-validated";
+                btn.innerText = "✓"; btn.className = "w-full rounded py-3 font-bold text-sm btn-validated"; // Apply fixed class
                 const row = document.getElementById(`set-row-${exoIdx}-${setIdx}`); 
                 row.dataset.performed = JSON.stringify({ kg: row.querySelectorAll('input')[0].value || 0, reps: row.querySelectorAll('input')[1].value || 0, rpe }); 
             } 
