@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fitness App Pro - V21.1 (Fixed)</title>
+    <title>Fitness App Pro - V22</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -25,9 +25,10 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         
+        /* Nav Active State */
         .nav-btn { color: #6b7280; transition: all 0.3s ease; }
-        .nav-btn.active { color: #8b5cf6 !important; } 
-        .nav-btn.active svg { filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6)); transform: scale(1.15); }
+        .nav-btn.active { color: #8b5cf6 !important; transform: translateY(-2px); } 
+        .nav-btn.active svg { filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6)); transform: scale(1.2); }
         
         .btn-validated { background-color: #22c55e !important; color: black !important; border-color: #22c55e !important; }
 
@@ -40,7 +41,7 @@
 
     <div id="cloud-toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-[110] bg-gray-800 border border-gray-600 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 toast-hidden">
         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <span class="text-xs font-bold text-white">Sauvegarde...</span>
+        <span class="text-xs font-bold text-white">Synchronisé</span>
     </div>
 
     <section id="view-auth" class="fixed inset-0 z-[100] bg-[#0f0f0f] flex flex-col items-center justify-center p-6 transition-all duration-500 overflow-y-auto">
@@ -69,10 +70,12 @@
         </div>
     </section>
 
-    <header class="sticky top-0 z-50 bg-app-bg/95 backdrop-blur-sm p-4 border-b border-gray-800 flex justify-between items-center h-16">
-        <h1 id="page-title" class="text-xl font-bold tracking-tight">Accueil</h1>
-        <div class="flex items-center gap-3">
-            <button onclick="window.location.reload()" class="text-gray-400 hover:text-white p-2">
+    <header class="sticky top-0 z-50 bg-app-bg/95 backdrop-blur-sm p-4 border-b border-gray-800 flex justify-center items-center h-16 relative">
+        
+        <h1 id="page-title" class="text-xl font-bold tracking-tight text-white">Accueil</h1>
+        
+        <div class="absolute right-4 flex items-center gap-3">
+            <button onclick="window.location.reload()" class="text-gray-400 hover:text-white p-1">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
             </button>
             <button id="header-add-btn" onclick="switchTab('view-add', null, 'Création')" class="hidden bg-app-accent hover:bg-white hover:text-black text-white w-8 h-8 rounded-full flex items-center justify-center transition shadow-lg">
@@ -87,11 +90,38 @@
 
     <main class="flex-grow overflow-y-auto p-4 pb-24 hide-scrollbar relative">
         
+        <section id="view-calendar" class="view-section hidden fade-in">
+            <div class="bg-app-card rounded-2xl p-4 border border-gray-800 shadow-lg mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-lg capitalize" id="calendar-month-title">...</h2>
+                </div>
+                <div class="grid grid-cols-7 text-center text-xs text-gray-500 mb-2 font-bold"><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div></div>
+                <div class="grid grid-cols-7 gap-2 text-sm text-center" id="calendar-grid"></div>
+            </div>
+            <div id="calendar-day-detail" class="fade-in">
+                <div class="bg-gray-800/30 border border-dashed border-gray-700 rounded-xl p-6 text-center text-sm text-gray-500">Sélectionne une date.</div>
+            </div>
+        </section>
+
+        <section id="view-stats" class="view-section hidden fade-in">
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-app-card p-4 rounded-xl border border-gray-800"><p class="text-xs text-gray-400 mb-1">Volume Total</p><p class="text-2xl font-black text-white" id="stat-volume">0 T</p></div>
+                <div class="bg-app-card p-4 rounded-xl border border-gray-800"><p class="text-xs text-gray-400 mb-1">Séances</p><p class="text-2xl font-black text-white" id="stat-sessions">0</p></div>
+            </div>
+            <div class="bg-app-card p-4 rounded-xl border border-gray-800 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-white">Progression (Max)</h3>
+                    <select id="stats-exo-select" onchange="renderChart()" class="bg-gray-900 text-xs text-white rounded p-1 border border-gray-700 outline-none max-w-[150px]"><option>Chargement...</option></select>
+                </div>
+                <div class="relative h-48 w-full"><canvas id="progressionChart"></canvas></div>
+            </div>
+        </section>
+
         <section id="view-home" class="view-section fade-in">
             <div class="flex justify-between items-end mb-6">
                 <div>
-                    <p class="text-xs text-gray-400 uppercase font-bold" id="user-role-display">Athlète</p>
-                    <h2 class="text-2xl font-bold text-white">Séances à faire</h2>
+                    <p class="text-sm text-gray-400">Bonjour, <span id="home-user-name" class="text-white font-bold">...</span></p>
+                    <h2 class="text-2xl font-bold text-white mt-1">Séances à faire</h2>
                 </div>
             </div>
             <div class="space-y-4" id="home-workouts-list"></div>
@@ -107,20 +137,35 @@
                     <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</div>
                 </div>
             </div>
-            <div class="mb-6 flex justify-between items-end">
-                <div><h2 class="text-2xl font-bold text-white mb-1" id="lib-title">Mes Programmes</h2></div>
-            </div>
             <div id="lib-list-container" class="space-y-3"></div>
         </section>
 
-        <section id="view-calendar" class="view-section hidden fade-in">
-            <div class="bg-app-card rounded-2xl p-4 border border-gray-800 shadow-lg mb-6">
-                <div class="flex justify-between items-center mb-4"><h2 class="font-bold text-lg">Calendrier</h2></div>
-                <div class="grid grid-cols-7 text-center text-xs text-gray-500 mb-2 font-bold"><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div></div>
-                <div class="grid grid-cols-7 gap-2 text-sm text-center" id="calendar-grid"></div>
+        <section id="view-profile" class="view-section hidden fade-in">
+            <div class="bg-app-card rounded-xl p-6 border border-gray-800 mb-6 text-center">
+                <div class="w-20 h-20 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-white" id="profile-avatar">?</div>
+                <h3 class="text-2xl font-bold text-white" id="profile-pseudo">...</h3>
+                <p class="text-lg text-gray-300 font-medium" id="profile-fullname">...</p>
+                <p class="text-xs text-gray-500 mt-1" id="profile-email">...</p>
+                
+                <span id="profile-role-badge" class="mt-3 inline-block bg-gray-800 text-xs px-3 py-1 rounded-full text-app-accent border border-gray-700">Athlète</span>
+                <button onclick="logout()" class="block w-full mt-6 text-red-400 text-xs border border-red-900/50 px-4 py-2 rounded">Déconnexion</button>
             </div>
-            <div id="calendar-day-detail" class="fade-in">
-                <div class="bg-gray-800/30 border border-dashed border-gray-700 rounded-xl p-6 text-center text-sm text-gray-500">Sélectionne une date.</div>
+            
+            <div id="coach-upgrade-section" class="bg-app-card rounded-xl p-4 border border-gray-800 mb-6">
+                <h3 class="text-sm font-bold text-white mb-2">Espace Coach</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="coach-code-input" placeholder="CODE" class="flex-grow bg-app-input rounded-lg px-3 py-2 text-sm text-white outline-none border border-gray-700">
+                    <button onclick="attemptUpgradeCoach()" class="bg-app-accent text-white text-xs font-bold px-4 rounded-lg">OK</button>
+                </div>
+            </div>
+
+            <div id="coach-team-section" class="hidden bg-app-card rounded-xl p-4 border border-app-accent/30 mb-6">
+                <h3 class="text-sm font-bold text-app-accent mb-2">Mon Équipe</h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="email" id="invite-email" placeholder="Email athlète" class="flex-grow bg-app-input rounded-lg px-3 py-2 text-sm text-white outline-none border border-gray-700">
+                    <button onclick="inviteAthlete()" class="bg-white text-black text-xs font-bold px-4 rounded-lg">Add</button>
+                </div>
+                <div id="team-list-display" class="space-y-2"></div>
             </div>
         </section>
 
@@ -134,17 +179,16 @@
             </div>
 
             <div id="program-name-container" class="mb-4">
-                <input type="text" id="program-name" placeholder="Nom du Programme (Ex: Hypertrophie)" class="w-full bg-transparent text-xl font-bold placeholder-gray-600 outline-none text-white">
+                <input type="text" id="program-name" placeholder="Nom du Programme" class="w-full bg-transparent text-xl font-bold placeholder-gray-600 outline-none text-white">
             </div>
 
             <div id="added-sessions-list" class="space-y-3 mb-8"></div>
 
             <div class="bg-app-card p-4 rounded-xl border border-gray-800 relative">
-                <div class="absolute -top-3 left-3 bg-app-card px-2 text-xs text-gray-400 font-bold border border-gray-800 rounded">Détails Séance</div>
+                <div class="absolute -top-3 left-3 bg-app-card px-2 text-xs text-gray-400 font-bold border border-gray-800 rounded">Ajouter une nouvelle séance</div>
                 <div class="space-y-4 mt-2">
                     <input type="text" id="session-name" placeholder="Nom Séance (ex: Legs)" class="w-full bg-gray-900 rounded-lg p-3 text-sm border border-gray-700 focus:border-app-accent outline-none text-white font-bold">
                     <div id="temp-exercises-list" class="space-y-2"></div>
-                    
                     <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-800 space-y-3">
                         <div class="grid grid-cols-2 gap-2">
                             <input type="text" id="exo-name" placeholder="Nom Exercice" class="w-full bg-gray-800 rounded p-2 text-sm text-white border border-gray-700 outline-none">
@@ -168,21 +212,18 @@
                         </div>
                         <button onclick="addExerciseToTemp()" id="btn-add-exo" class="w-full bg-gray-700 hover:bg-white hover:text-black text-white text-xs py-2 rounded font-bold transition">+ Ajouter Ligne</button>
                     </div>
-
-                    <div class="flex gap-2">
-                        <button onclick="addSessionToStack()" id="btn-validate-session" class="w-full py-3 bg-app-accent/20 text-app-accent border border-app-accent/50 hover:bg-app-accent hover:text-white text-sm font-bold rounded-lg transition">Ajouter cette séance</button>
-                    </div>
+                    <button onclick="addSessionToStack()" id="btn-validate-session" class="w-full py-3 bg-app-accent/20 text-app-accent border border-app-accent/50 hover:bg-app-accent hover:text-white text-sm font-bold rounded-lg transition">Ajouter cette séance</button>
+                    <button onclick="updateSessionInStack()" id="btn-update-session-stack" class="hidden w-full py-3 bg-blue-600 text-white font-bold rounded-lg">Valider Modif.</button>
                 </div>
             </div>
-
             <button type="button" onclick="saveFullProgram()" id="btn-save-program" class="w-full bg-white text-black font-bold py-4 rounded-xl shadow-lg mt-8 mb-4">Sauvegarder le Programme</button>
         </section>
 
         <section id="view-preview" class="fixed inset-0 bg-app-bg z-[55] p-6 flex flex-col hidden overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex justify-between items-center mb-6 pt-4">
                 <button onclick="closePreview()" class="text-gray-400 hover:text-white">✕ Fermer</button>
                 <div class="flex gap-2">
-                    <button onclick="editSessionFromPreview()" class="text-app-accent text-sm border border-app-accent/30 px-3 py-1 rounded hover:bg-app-accent/10">Modifier ✏️</button>
+                    <button id="btn-edit-session" onclick="editSessionFromPreview()" class="text-app-accent text-sm border border-app-accent/30 px-3 py-1 rounded hover:bg-app-accent/10">Modifier ✏️</button>
                     <button id="btn-delete-session" onclick="deleteSessionFromPreview()" class="text-app-danger text-sm border border-app-danger/30 px-3 py-1 rounded hover:bg-app-danger/10">Supprimer</button>
                 </div>
             </div>
@@ -201,57 +242,15 @@
             <div class="p-4 space-y-6 pb-24" id="active-workout-container"></div>
         </section>
 
-        <section id="view-stats" class="view-section hidden fade-in">
-            <h2 class="text-lg font-bold mb-4">Statistiques</h2>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="bg-app-card p-4 rounded-xl border border-gray-800"><p class="text-xs text-gray-400 mb-1">Volume Total</p><p class="text-2xl font-black text-white" id="stat-volume">0 T</p></div>
-                <div class="bg-app-card p-4 rounded-xl border border-gray-800"><p class="text-xs text-gray-400 mb-1">Séances</p><p class="text-2xl font-black text-white" id="stat-sessions">0</p></div>
-            </div>
-            <div class="bg-app-card p-4 rounded-xl border border-gray-800 mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-white">Progression (Max)</h3>
-                    <select id="stats-exo-select" onchange="renderChart()" class="bg-gray-900 text-xs text-white rounded p-1 border border-gray-700 outline-none max-w-[150px]"><option>Chargement...</option></select>
-                </div>
-                <div class="relative h-48 w-full"><canvas id="progressionChart"></canvas></div>
-            </div>
-        </section>
-
-        <section id="view-profile" class="view-section hidden fade-in">
-            <h2 class="text-lg font-bold mb-4">Profil</h2>
-            <div class="bg-app-card rounded-xl p-6 border border-gray-800 mb-6 text-center">
-                <div class="w-20 h-20 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-white" id="profile-avatar">?</div>
-                <h3 class="text-2xl font-bold text-white" id="profile-pseudo">...</h3>
-                <p class="text-lg text-gray-300 font-medium" id="profile-fullname">...</p>
-                <p class="text-xs text-gray-500 mt-1" id="profile-email">...</p>
-                <span id="profile-role-badge" class="mt-3 inline-block bg-gray-800 text-xs px-3 py-1 rounded-full text-app-accent border border-gray-700">Athlète</span>
-                <button onclick="logout()" class="block w-full mt-6 text-red-400 text-xs border border-red-900/50 px-4 py-2 rounded">Déconnexion</button>
-            </div>
-            <div id="coach-upgrade-section" class="bg-app-card rounded-xl p-4 border border-gray-800 mb-6">
-                <h3 class="text-sm font-bold text-white mb-2">Espace Coach</h3>
-                <div class="flex gap-2">
-                    <input type="text" id="coach-code-input" placeholder="CODE" class="flex-grow bg-app-input rounded-lg px-3 py-2 text-sm text-white outline-none border border-gray-700">
-                    <button onclick="attemptUpgradeCoach()" class="bg-app-accent text-white text-xs font-bold px-4 rounded-lg">OK</button>
-                </div>
-            </div>
-            <div id="coach-team-section" class="hidden bg-app-card rounded-xl p-4 border border-app-accent/30 mb-6">
-                <h3 class="text-sm font-bold text-app-accent mb-2">Mon Équipe</h3>
-                <div class="flex gap-2 mb-4">
-                    <input type="email" id="invite-email" placeholder="Email athlète" class="flex-grow bg-app-input rounded-lg px-3 py-2 text-sm text-white outline-none border border-gray-700">
-                    <button onclick="inviteAthlete()" class="bg-white text-black text-xs font-bold px-4 rounded-lg">Add</button>
-                </div>
-                <div id="team-list-display" class="space-y-2"></div>
-            </div>
-        </section>
-
     </main>
 
     <nav class="fixed bottom-0 w-full bg-app-card border-t border-gray-800 pb-safe z-40 h-16 shadow-2xl">
         <div class="flex justify-around items-center h-full px-2">
-            <button onclick="switchTab('view-calendar', this, 'Calendrier')" id="nav-cal" class="nav-btn p-3 w-1/5 flex justify-center flex-col items-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mb-0.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg><span class="text-[10px]">Agenda</span></button>
-            <button onclick="switchTab('view-stats', this, 'Statistiques')" id="nav-stats" class="nav-btn p-3 w-1/5 flex justify-center flex-col items-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mb-0.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg><span class="text-[10px]">Stats</span></button>
-            <button onclick="switchTab('view-home', this, 'Accueil')" id="nav-home" class="nav-btn p-3 w-1/5 flex justify-center flex-col items-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg><span class="text-[10px]">Accueil</span></button>
-            <button onclick="switchTab('view-library', this, 'Bibliothèque')" id="nav-lib" class="nav-btn p-3 w-1/5 flex justify-center flex-col items-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mb-0.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg><span class="text-[10px]">Library</span></button>
-            <button onclick="switchTab('view-profile', this, 'Profil')" id="nav-prof" class="nav-btn p-3 w-1/5 flex justify-center flex-col items-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mb-0.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg><span class="text-[10px]">Profil</span></button>
+            <button onclick="switchTab('view-calendar', this, 'Calendrier')" id="nav-cal" class="nav-btn p-3 w-1/5 flex justify-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg></button>
+            <button onclick="switchTab('view-stats', this, 'Statistiques')" id="nav-stats" class="nav-btn p-3 w-1/5 flex justify-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg></button>
+            <button onclick="switchTab('view-home', this, 'Accueil')" id="nav-home" class="nav-btn p-3 w-1/5 flex justify-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg></button>
+            <button onclick="switchTab('view-library', this, 'Programmes')" id="nav-lib" class="nav-btn p-3 w-1/5 flex justify-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg></button>
+            <button onclick="switchTab('view-profile', this, 'Profil')" id="nav-prof" class="nav-btn p-3 w-1/5 flex justify-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg></button>
         </div>
     </nav>
 
@@ -265,13 +264,10 @@
         let userData = { profile: {}, team: [], history: {}, stats: { volume: 0, sessions: 0 }, programs: [] };
         let currentCoachTarget = null;
         let chartInstance = null;
-        
-        // EDIT STATES
         let isEditingMode = false;
         let editingProgramIndex = null;
         let editingSessionIndex = null;
         let editingExoIndex = null;
-        
         let activeSessionExercises = null;
         let tempSessionStack = [], tempExercises = [];
 
@@ -303,6 +299,9 @@
             
             const now = new Date();
             const yearMonth = now.toISOString().slice(0, 7);
+            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+            document.getElementById('calendar-month-title').innerText = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+            
             const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
             for(let i=1; i<=daysInMonth; i++) {
@@ -364,7 +363,6 @@
             const pass = document.getElementById('login-pass').value;
             let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
             if (error) document.getElementById('auth-message').innerText = error.message;
-            else userConnected(data.user);
         }
         async function registerUser() {
             const email = document.getElementById('reg-email').value;
@@ -379,7 +377,6 @@
                 if(data.session) {
                     const initData = { profile: { pseudo, nom: lname, prenom: fname, email, role: 'athlete' }, stats: { volume: 0, sessions: 0 }, programs: [], team: [], history: {} };
                     await supabaseClient.from('user_data').upsert({ user_id: data.user.id, content: initData });
-                    userConnected(data.user); 
                 } else alert("Vérifie tes mails !"); 
             }
         }
@@ -409,12 +406,13 @@
 
         function updateUI() {
             const p = userData.profile;
-            document.getElementById('user-role-display').innerText = p.role === 'coach' ? 'Coach' : 'Athlète';
+            document.getElementById('home-user-name').innerText = p.prenom || "Athlète";
             document.getElementById('profile-pseudo').innerText = p.pseudo || "Utilisateur";
             document.getElementById('profile-fullname').innerText = `${p.prenom || ''} ${p.nom || ''}`;
             document.getElementById('profile-email').innerText = p.email;
             document.getElementById('profile-avatar').innerText = (p.pseudo || "?")[0].toUpperCase();
             document.getElementById('profile-role-badge').innerText = p.role === 'coach' ? 'Coach' : 'Athlète';
+
             if(p.role === 'coach') {
                 document.getElementById('coach-upgrade-section').classList.add('hidden');
                 document.getElementById('coach-team-section').classList.remove('hidden');
@@ -445,22 +443,24 @@
             programsToShow.forEach((prog, pIdx) => {
                 const isCoachProg = prog.source === 'coach';
                 const border = isCoachProg ? 'border-app-accent' : 'border-gray-800';
-                const renameBtn = `<button onclick="event.stopPropagation(); renameProgram(${pIdx})" class="text-gray-400 hover:text-white ml-2">✎</button>`;
+                const isCoach = userData.profile.role === 'coach';
+                const canEdit = !isCoachProg || isCoach; 
+                const renameBtn = canEdit ? `<button onclick="event.stopPropagation(); renameProgram(${pIdx})" class="text-gray-400 hover:text-white ml-2">✎</button>` : '';
                 const copyBtn = `<button onclick="event.stopPropagation(); duplicateProgram(${pIdx})" class="text-gray-400 hover:text-white ml-2">❐</button>`;
 
                 libContainer.innerHTML += `
                     <div class="bg-app-card p-4 rounded-xl border ${border} mb-3">
                         <div class="flex justify-between items-center mb-2">
-                            <h4 class="font-bold text-white flex items-center cursor-pointer" onclick="loadProgramForEdit(${pIdx})">${prog.name} ${renameBtn}</h4>
+                            <h4 class="font-bold text-white flex items-center cursor-pointer" onclick="${canEdit ? `loadProgramForEdit(${pIdx})` : ''}">${prog.name} ${renameBtn}</h4>
                             <div class="flex items-center">${isCoachProg ? '<span class="text-[10px] bg-app-accent px-2 rounded text-white mr-2">COACH</span>' : ''}${copyBtn}</div>
                         </div>
                         <div class="space-y-1">${prog.sessions.map((s, sIdx) => `
                             <div class="flex justify-between items-center bg-gray-900/50 p-3 rounded">
                                 <div onclick="openPreview(${pIdx}, ${sIdx})" class="flex-grow text-sm text-gray-400 hover:text-white cursor-pointer">${s.name}</div>
-                                <button onclick="editSessionFromList(${pIdx}, ${sIdx})" class="text-xs text-app-accent bg-gray-800 px-2 py-1 rounded ml-2">Modif.</button>
                             </div>`).join('')}
                         </div>
                     </div>`;
+
                 prog.sessions.forEach((s, sIdx) => {
                     homeList.innerHTML += `<div onclick="openPreview(${pIdx}, ${sIdx})" class="bg-app-card p-4 rounded-xl border border-gray-800 flex justify-between items-center cursor-pointer hover:border-app-accent"><div><h4 class="font-bold text-white">${s.name}</h4><p class="text-xs text-gray-500">${prog.name}</p></div><div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400">➤</div></div>`;
                 });
@@ -470,7 +470,12 @@
         function renameProgram(pIdx) {
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
             const newName = prompt("Nouveau nom :", dataSrc.programs[pIdx].name);
-            if(newName) { dataSrc.programs[pIdx].name = newName; if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id); else syncData(); updateUI(); }
+            if(newName) { 
+                dataSrc.programs[pIdx].name = newName; 
+                if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id); 
+                else syncData(); 
+                updateUI(); 
+            }
         }
         function duplicateProgram(pIdx) {
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
@@ -485,29 +490,22 @@
             const email = document.getElementById('invite-email').value; if(!email) return;
             let { data } = await supabaseClient.from('user_data').select('user_id, content').contains('content', { profile: { email: email } }).maybeSingle();
             if(data) {
-                const p = data.content.profile;
-                if(userData.team.some(m => m.uid === data.user_id)) return alert("Déjà dans l'équipe");
+                const p = data.content.profile; if(userData.team.some(m => m.uid === data.user_id)) return alert("Déjà dans l'équipe");
                 userData.team.push({ email: p.email, nom: p.nom, prenom: p.prenom, uid: data.user_id });
                 syncData(); updateUI(); populateCoachSelector(); document.getElementById('invite-email').value = ''; alert(`${p.prenom} ajouté !`);
             } else { alert("Aucun compte trouvé avec cet email."); }
         }
         function populateCoachSelector() { const sel = document.getElementById('coach-athlete-select'); sel.innerHTML = '<option value="me">👤 Mon Espace Perso</option>'; userData.team.forEach(m => { sel.innerHTML += `<option value="${m.uid}">🏃 ${m.prenom} ${m.nom}</option>`; }); }
-        async function changeCoachTarget() {
-            const targetId = document.getElementById('coach-athlete-select').value;
-            if(targetId === 'me') { currentCoachTarget = null; document.getElementById('lib-title').innerText = "Mes Programmes"; updateUI(); } 
-            else {
-                let { data } = await supabaseClient.from('user_data').select('user_id, content').eq('user_id', targetId).single();
-                if(data) { currentCoachTarget = data; document.getElementById('lib-title').innerText = "Prog. de " + data.content.profile.prenom; renderProgramLists(); }
-            }
-        }
+        async function changeCoachTarget() { const targetId = document.getElementById('coach-athlete-select').value; if(targetId === 'me') { currentCoachTarget = null; document.getElementById('lib-title').innerText = "Mes Programmes"; updateUI(); } else { let { data } = await supabaseClient.from('user_data').select('user_id, content').eq('user_id', targetId).single(); if(data) { currentCoachTarget = data; document.getElementById('lib-title').innerText = "Prog. de " + data.content.profile.prenom; renderProgramLists(); } } }
 
-        // --- UNIFIED CREATION & EDITING ---
+        // SMART CREATION & EDITING
         function loadProgramForEdit(pIdx) {
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
             const prog = dataSrc.programs[pIdx];
             isEditingMode = true; editingProgramIndex = pIdx;
             document.getElementById('program-name').value = prog.name;
-            // Load Stack
+            document.getElementById('session-name').value = '';
+            tempExercises = []; renderTempExos();
             tempSessionStack = JSON.parse(JSON.stringify(prog.sessions));
             renderSessionStackUI();
             document.getElementById('add-mode-label').innerText = "Modifier Programme";
@@ -520,22 +518,16 @@
             const name = document.getElementById('exo-name').value;
             const format = document.getElementById('exo-format').value;
             if(!name) return;
-            
             if(editingExoIndex !== null) {
-                tempExercises[editingExoIndex] = { 
-                    name, format, 
-                    sets: document.getElementById('exo-sets').value, reps: document.getElementById('exo-reps').value, rest: document.getElementById('exo-rest').value, rpe: document.getElementById('exo-rpe').value, load: document.getElementById('exo-load').value, note: document.getElementById('exo-note').value 
-                };
+                tempExercises[editingExoIndex] = { name, format, sets: document.getElementById('exo-sets').value, reps: document.getElementById('exo-reps').value, rest: document.getElementById('exo-rest').value, rpe: document.getElementById('exo-rpe').value, load: document.getElementById('exo-load').value, note: document.getElementById('exo-note').value };
                 editingExoIndex = null; document.getElementById('btn-add-exo').innerText = "+ Ajouter Ligne";
             } else {
                 tempExercises.push({ name, format, sets: document.getElementById('exo-sets').value, reps: document.getElementById('exo-reps').value, rest: document.getElementById('exo-rest').value, rpe: document.getElementById('exo-rpe').value, load: document.getElementById('exo-load').value, note: document.getElementById('exo-note').value });
             }
             renderTempExos();
-            
-            if(format === "Top Set") { document.getElementById('exo-format').value = "Back Off"; document.getElementById('exo-sets').value = ""; document.getElementById('exo-load').value = ""; document.getElementById('exo-reps').value = ""; document.getElementById('exo-rpe').value = ""; } 
-            else { document.getElementById('exo-name').value = ""; document.getElementById('exo-format').value = "Straight Set"; document.getElementById('exo-sets').value = ""; document.getElementById('exo-load').value = ""; document.getElementById('exo-reps').value = ""; document.getElementById('exo-rpe').value = ""; document.getElementById('exo-rest').value = ""; }
+            if(format === "Top Set") { document.getElementById('exo-format').value = "Back Off"; document.getElementById('exo-sets').value = ""; document.getElementById('exo-load').value = ""; document.getElementById('exo-reps').value = ""; document.getElementById('exo-rpe').value = ""; } else { document.getElementById('exo-name').value = ""; document.getElementById('exo-format').value = "Straight Set"; document.getElementById('exo-sets').value = ""; document.getElementById('exo-load').value = ""; document.getElementById('exo-reps').value = ""; document.getElementById('exo-rpe').value = ""; document.getElementById('exo-rest').value = ""; }
         }
-        function renderTempExos() { document.getElementById('temp-exercises-list').innerHTML = tempExercises.map((e, i) => `<div class="flex justify-between items-center bg-gray-800 p-2 rounded mb-2 border border-gray-700 cursor-pointer" onclick="loadExoForEdit(${i})"><div><span class="text-xs font-bold text-white block">${e.name} <span class="text-app-topSet">${e.format || ''}</span></span><span class="text-[10px] text-gray-400">${e.sets}x${e.reps} ${e.load ? '@'+e.load+'kg' : ''}</span></div><button onclick="event.stopPropagation(); removeExo(${i})" class="text-red-500 px-2">✕</button></div>`).join(''); }
+        function renderTempExos() { document.getElementById('temp-exercises-list').innerHTML = tempExercises.map((e, i) => `<div class="flex justify-between items-center bg-gray-800 p-2 rounded mb-2 border border-gray-700 cursor-pointer" onclick="loadExoForEdit(${i})"><div><span class="text-xs font-bold text-white block">${e.name} <span class="text-app-topSet">${e.format}</span></span><span class="text-[10px] text-gray-400">${e.sets}x${e.reps} ${e.load ? '@'+e.load+'kg' : ''}</span></div><button onclick="event.stopPropagation(); removeExo(${i})" class="text-red-500 px-2">✕</button></div>`).join(''); }
         function removeExo(i) { tempExercises.splice(i, 1); renderTempExos(); }
         function loadExoForEdit(i) { const e = tempExercises[i]; editingExoIndex = i; document.getElementById('exo-name').value = e.name; document.getElementById('exo-format').value = e.format; document.getElementById('exo-sets').value = e.sets; document.getElementById('exo-reps').value = e.reps; document.getElementById('exo-rest').value = e.rest; document.getElementById('exo-rpe').value = e.rpe; document.getElementById('exo-load').value = e.load; document.getElementById('exo-note').value = e.note; document.getElementById('btn-add-exo').innerText = "Modifier Ligne"; }
 
@@ -552,22 +544,18 @@
         async function saveFullProgram() {
             const name = document.getElementById('program-name').value;
             if(!name || tempSessionStack.length === 0) return alert("Incomplet");
-            
             const newProg = { name: name, source: currentCoachTarget ? 'coach' : 'personal', sessions: tempSessionStack };
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
             const targetUserId = currentCoachTarget ? currentCoachTarget.user_id : currentUser.id;
 
-            if(isEditingMode && editingProgramIndex !== null) dataSrc.programs[editingProgramIndex] = newProg; // UPDATE
-            else dataSrc.programs.push(newProg); // CREATE
+            if(isEditingMode && editingProgramIndex !== null) dataSrc.programs[editingProgramIndex] = newProg;
+            else dataSrc.programs.push(newProg);
 
             await syncData(dataSrc, targetUserId);
-            resetAddView(); switchTab('view-library', null, 'Bibliothèque');
+            resetAddView(); switchTab('view-library', null, 'Programmes');
         }
         
-        function editSessionFromList(pIdx, sIdx) { loadProgramForEdit(pIdx); loadSessionFromStack(sIdx); }
-        function editSessionFromPreview() { closePreview(); editSessionFromList(currentProgramIndex, currentPreviewSessionIndex); }
-        
-        function cancelEdit() { resetAddView(); switchTab('view-library', null, 'Bibliothèque'); }
+        function cancelEdit() { resetAddView(); switchTab('view-library', null, 'Programmes'); }
         function resetAddView() { 
             isEditingMode = false; editingProgramIndex = null; editingSessionIndex = null; editingExoIndex = null;
             tempSessionStack = []; tempExercises = []; 
@@ -579,24 +567,41 @@
             document.getElementById('btn-validate-session').innerText = "Ajouter cette séance";
         }
 
-        // PREVIEW & WORKOUT
+        // PREVIEW
+        let currentProgramIndex, currentPreviewSessionIndex;
         function openPreview(pIdx, sIdx) {
             currentProgramIndex = pIdx; currentPreviewSessionIndex = sIdx;
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData; const sess = dataSrc.programs[pIdx].sessions[sIdx];
             document.getElementById('preview-title').innerText = sess.name;
             const btnDel = document.getElementById('btn-delete-session');
-            if(dataSrc.programs[pIdx].source === 'coach' && userData.profile.role !== 'coach') btnDel.classList.add('hidden'); else btnDel.classList.remove('hidden');
+            const btnEdit = document.getElementById('btn-edit-session');
+            const canEdit = userData.profile.role === 'coach' || dataSrc.programs[pIdx].source !== 'coach';
+            if(canEdit) { btnDel.classList.remove('hidden'); btnEdit.classList.remove('hidden'); } else { btnDel.classList.add('hidden'); btnEdit.classList.add('hidden'); }
             document.getElementById('preview-exo-list').innerHTML = sess.exercises.map(e => `<div class="bg-gray-800 rounded p-3 border border-gray-700"><div class="flex justify-between items-start mb-1"><div><span class="font-bold text-white text-lg block">${e.name}</span><span class="${e.format==='Top Set'?'text-app-topSet':'text-gray-400'} text-xs font-bold uppercase">${e.format || ''}</span></div><span class="text-xs bg-gray-700 px-2 rounded text-gray-300">RPE ${e.rpe}</span></div><div class="text-xs text-gray-400">${e.sets} x ${e.reps} • ${e.rest}</div></div>`).join('');
             document.getElementById('view-preview').classList.remove('hidden');
         }
         function closePreview() { document.getElementById('view-preview').classList.add('hidden'); }
         async function deleteSessionFromPreview() { if(!confirm("Supprimer ?")) return; const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData; dataSrc.programs[currentProgramIndex].sessions.splice(currentPreviewSessionIndex, 1); if(dataSrc.programs[currentProgramIndex].sessions.length === 0) dataSrc.programs.splice(currentProgramIndex, 1); await syncData(dataSrc, currentCoachTarget?.user_id); updateUI(); closePreview(); }
+        function editSessionFromPreview() {
+            isEditingMode = true; editingProgramIndex = currentProgramIndex;
+            const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData; const prog = dataSrc.programs[currentProgramIndex];
+            document.getElementById('program-name').value = prog.name;
+            tempSessionStack = JSON.parse(JSON.stringify(prog.sessions));
+            renderSessionStackUI();
+            loadSessionFromStack(currentPreviewSessionIndex);
+            document.getElementById('add-mode-label').innerText = "Modifier Programme";
+            document.getElementById('btn-save-program').innerText = "Mettre à jour le Programme";
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+            closePreview(); switchTab('view-add', null, 'Modification');
+        }
         function launchSessionFromPreview() { const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData; startWorkout(dataSrc.programs[currentProgramIndex].sessions[currentPreviewSessionIndex]); closePreview(); }
 
+        // WORKOUT
         let workoutInterval;
         function startWorkout(sess) {
             activeSessionExercises = sess.exercises;
-            document.getElementById('view-active-workout').classList.remove('hidden'); document.getElementById('workout-timer-display').classList.remove('hidden');
+            document.getElementById('view-active-workout').classList.remove('hidden');
+            document.getElementById('workout-timer-display').classList.remove('hidden');
             document.getElementById('active-workout-container').innerHTML = `<h2 class="text-2xl text-white font-bold mb-6">${sess.name}</h2>` + sess.exercises.map((exo, idx) => { let rows = ''; for(let i=1; i<=exo.sets; i++) rows += `<div class="grid grid-cols-10 gap-2 items-center mb-2" id="set-row-${idx}-${i}"><div class="col-span-1 text-center font-bold text-gray-500">${i}</div><div class="col-span-3"><input type="number" class="w-full bg-gray-900 rounded border border-gray-700 text-center py-2 text-white font-bold" placeholder="${exo.load || '-'}"></div><div class="col-span-3"><input type="number" class="w-full bg-gray-900 rounded border border-gray-700 text-center py-2 text-white font-bold" placeholder="${exo.reps}"></div><div class="col-span-3 flex justify-center"><button onclick="validateSet(this, ${idx}, ${i})" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-400 rounded py-2 transition font-bold text-xs border border-gray-600">RPE</button></div></div>`; return `<div class="bg-app-card rounded-xl border border-gray-800 overflow-hidden mb-6"><div class="bg-gray-800/50 p-3 border-b border-gray-800"><div class="flex justify-between items-center mb-1"><h3 class="font-bold text-lg text-white">${exo.name}</h3><span class="${exo.format==='Top Set'?'text-app-topSet':'text-gray-400'} text-xs font-bold uppercase">${exo.format || ''}</span></div><div class="flex gap-4 text-xs text-gray-400"><span>Obj: ${exo.load || '-'}kg</span><span>${exo.sets}x${exo.reps}</span><span>RPE ${exo.rpe}</span></div></div><div class="p-3"><div class="grid grid-cols-10 gap-2 text-[10px] text-gray-500 mb-2 text-center uppercase font-bold tracking-wider"><div class="col-span-1">#</div><div class="col-span-3">KG</div><div class="col-span-3">REPS</div><div class="col-span-3">RPE</div></div>${rows}</div></div>`; }).join('');
             let sec = 0; clearInterval(workoutInterval); workoutInterval = setInterval(() => { sec++; document.getElementById('active-timer').innerText = new Date(sec * 1000).toISOString().substr(14, 5); document.getElementById('timer-val').innerText = document.getElementById('active-timer').innerText; }, 1000);
         }
@@ -609,10 +614,8 @@
         }
         function minimizeWorkout() { document.getElementById('view-active-workout').classList.add('hidden'); }
         function returnToActiveWorkout() { document.getElementById('view-active-workout').classList.remove('hidden'); }
-
-        // CHARTS
         function updateStatsDropdown() { const sel = document.getElementById('stats-exo-select'); sel.innerHTML = '<option>Choisir...</option>'; const exos = new Set(); Object.values(userData.history).flat().forEach(s => { if(s.exercises) s.exercises.forEach(e => exos.add(e.name)) }); exos.forEach(name => sel.innerHTML += `<option>${name}</option>`); }
-        function renderChart() { const exoName = document.getElementById('stats-exo-select').value; const ctx = document.getElementById('progressionChart').getContext('2d'); const dataPoints = []; Object.entries(userData.history).forEach(([date, sessions]) => { sessions.forEach(sess => { if(sess.exercises) { const exoData = sess.exercises.find(e => e.name === exoName); if(exoData) { const maxWeight = Math.max(...exoData.sets.map(s => parseFloat(s.kg))); dataPoints.push({ x: date, y: maxWeight }); } } }); }); dataPoints.sort((a,b) => new Date(a.x) - new Date(b.x)); if(chartInstance) chartInstance.destroy(); chartInstance = new Chart(ctx, { type: 'line', data: { labels: dataPoints.map(d => d.x), datasets: [{ label: 'Max (kg)', data: dataPoints.map(d => d.y), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', tension: 0.3, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } }, plugins: { legend: { labels: { color: 'white' } } } } }); }
+        function renderChart() { const exoName = document.getElementById('stats-exo-select').value; const ctx = document.getElementById('progressionChart').getContext('2d'); const dataPoints = []; Object.entries(userData.history).forEach(([date, sessions]) => { sessions.forEach(sess => { if(sess.exercises) { const exoData = sess.exercises.find(e => e.name === exoName); if(exoData) { const maxWeight = Math.max(...exoData.sets.map(s => parseFloat(s.kg))); dataPoints.push({ x: date, y: maxWeight }); } } }); }); dataPoints.sort((a,b) => new Date(a.x) - new Date(b.x)); if(chartInstance) chartInstance.destroy(); chartInstance = new Chart(ctx, { type: 'line', data: { labels: dataPoints.map(d => d.x), datasets: [{ label: 'Charge Max (kg)', data: dataPoints.map(d => d.y), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', tension: 0.3, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } }, plugins: { legend: { labels: { color: 'white' } } } } }); }
     </script>
 </body>
 </html>
