@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fitness App Pro - V20.1 Stable</title>
+    <title>Fitness App Pro - V20.2 (Add Session)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -40,7 +40,7 @@
 
     <div id="cloud-toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-[110] bg-gray-800 border border-gray-600 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 toast-hidden">
         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <span class="text-xs font-bold text-white">Sauvegarde...</span>
+        <span class="text-xs font-bold text-white">Synchronisé</span>
     </div>
 
     <section id="view-auth" class="fixed inset-0 z-[100] bg-[#0f0f0f] flex flex-col items-center justify-center p-6 transition-all duration-500 overflow-y-auto">
@@ -72,13 +72,9 @@
     <header class="sticky top-0 z-50 bg-app-bg/95 backdrop-blur-sm p-4 border-b border-gray-800 flex justify-between items-center h-16">
         <h1 id="page-title" class="text-xl font-bold tracking-tight">Accueil</h1>
         <div class="flex items-center gap-3">
-            <button onclick="window.location.reload()" class="text-gray-400 hover:text-white p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
-            </button>
             <button id="header-add-btn" onclick="switchTab('view-add', null, 'Création')" class="hidden bg-app-accent hover:bg-white hover:text-black text-white w-8 h-8 rounded-full flex items-center justify-center transition shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
             </button>
-            
             <div id="workout-timer-display" class="hidden bg-gray-800 px-3 py-1 rounded-full border border-gray-700 flex items-center gap-2 cursor-pointer transition active:scale-95" onclick="returnToActiveWorkout()">
                 <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                 <span id="timer-val" class="font-mono font-bold text-sm">00:00</span>
@@ -141,7 +137,7 @@
             <div id="added-sessions-list" class="space-y-3 mb-8"></div>
 
             <div class="bg-app-card p-4 rounded-xl border border-gray-800 relative">
-                <div class="absolute -top-3 left-3 bg-app-card px-2 text-xs text-gray-400 font-bold border border-gray-800 rounded">Éditeur Séance</div>
+                <div class="absolute -top-3 left-3 bg-app-card px-2 text-xs text-gray-400 font-bold border border-gray-800 rounded">Nouvelle Séance</div>
                 <div class="space-y-4 mt-2">
                     <input type="text" id="session-name" placeholder="Nom Séance (ex: Legs)" class="w-full bg-gray-900 rounded-lg p-3 text-sm border border-gray-700 focus:border-app-accent outline-none text-white font-bold">
                     
@@ -161,18 +157,17 @@
                         <div class="grid grid-cols-4 gap-2">
                             <input type="number" id="exo-sets" placeholder="Séries" class="bg-gray-800 rounded p-2 text-sm text-center text-white border border-gray-700">
                             <input type="text" id="exo-reps" placeholder="Reps" class="bg-gray-800 rounded p-2 text-sm text-center text-white border border-gray-700">
-                            <input type="text" id="exo-rest" placeholder="min" class="bg-gray-800 rounded p-2 text-sm text-center text-white border border-gray-700">
+                            <input type="text" id="exo-rest" placeholder="Repos" class="bg-gray-800 rounded p-2 text-sm text-center text-white border border-gray-700">
                             <input type="text" id="exo-rpe" placeholder="RPE" class="bg-gray-800 rounded p-2 text-sm text-center text-white border border-gray-700">
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="exo-load" placeholder="kg" class="w-full bg-gray-800 rounded p-2 text-xs text-white border border-gray-700">
+                            <input type="text" id="exo-load" placeholder="Charge Rec." class="w-full bg-gray-800 rounded p-2 text-xs text-white border border-gray-700">
                             <input type="text" id="exo-note" placeholder="Consignes" class="w-full bg-gray-800 rounded p-2 text-xs text-white border border-gray-700">
                         </div>
                         <button onclick="addExerciseToTemp()" id="btn-add-exo" class="w-full bg-gray-700 hover:bg-white hover:text-black text-white text-xs py-2 rounded font-bold transition">+ Ajouter Ligne</button>
                     </div>
 
-                    <button onclick="addSessionToStack()" id="btn-validate-session" class="w-full py-3 bg-app-accent/20 text-app-accent border border-app-accent/50 hover:bg-app-accent hover:text-white text-sm font-bold rounded-lg transition">Ajouter cette séance</button>
-                    <button onclick="updateSessionInStack()" id="btn-update-session-stack" class="hidden w-full py-3 bg-blue-600 text-white font-bold rounded-lg">Mettre à jour</button>
+                    <button onclick="addSessionToStack()" id="btn-validate-session" class="w-full py-3 bg-app-accent/20 text-app-accent border border-app-accent/50 hover:bg-app-accent hover:text-white text-sm font-bold rounded-lg transition">Ajouter cette séance au programme</button>
                 </div>
             </div>
 
@@ -212,7 +207,7 @@
             <div class="bg-app-card p-4 rounded-xl border border-gray-800 mb-6">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-white">Progression (Max)</h3>
-                    <select id="stats-exo-select" onchange="renderChart()" class="bg-gray-900 text-xs text-white rounded p-1 border border-gray-700 outline-none max-w-[150px]"><option>Chargement...</option></select>
+                    <select id="stats-exo-select" onchange="renderChart()" class="bg-gray-900 text-xs text-white rounded p-1 border border-gray-700 outline-none max-w-[150px]"><option>Historique vide</option></select>
                 </div>
                 <div class="relative h-48 w-full"><canvas id="progressionChart"></canvas></div>
             </div>
@@ -267,7 +262,7 @@
         let currentCoachTarget = null;
         let chartInstance = null;
         
-        // EDIT STATES
+        // EDITING STATES
         let isEditingMode = false;
         let editingProgramIndex = null;
         let editingSessionIndex = null;
@@ -279,14 +274,6 @@
         // AUTH
         window.onload = async function() {
             switchTab('view-home', document.getElementById('nav-home'), 'Accueil');
-            
-            // Auth State Listener for Refresh Persistence
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                if (event === 'SIGNED_IN' && session) {
-                    userConnected(session.user);
-                }
-            });
-
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) userConnected(session.user);
         }
@@ -299,6 +286,7 @@
             const pass = document.getElementById('login-pass').value;
             let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
             if (error) document.getElementById('auth-message').innerText = error.message;
+            else userConnected(data.user);
         }
         async function registerUser() {
             const email = document.getElementById('reg-email').value;
@@ -314,6 +302,7 @@
                 if(data.session) {
                     const initData = { profile: { pseudo, nom: lname, prenom: fname, email, role: 'athlete' }, stats: { volume: 0, sessions: 0 }, programs: [], team: [], history: {} };
                     await supabaseClient.from('user_data').upsert({ user_id: data.user.id, content: initData });
+                    userConnected(data.user); 
                 } else alert("Vérifie tes mails !"); 
             }
         }
@@ -331,7 +320,7 @@
                 if(userData.profile.role === 'coach') populateCoachSelector();
                 updateStatsDropdown();
             }
-            initCalendar(new Date().toISOString().split('T')[0]);
+            initCalendar();
         }
         async function syncData(targetUserData = null, targetUserId = null) {
             const t = document.getElementById('cloud-toast');
@@ -387,19 +376,26 @@
                 const isCoachProg = prog.source === 'coach';
                 const border = isCoachProg ? 'border-app-accent' : 'border-gray-800';
                 
+                // RENAME BUTTON
                 const renameBtn = `<button onclick="event.stopPropagation(); renameProgram(${pIdx})" class="text-gray-400 hover:text-white ml-2">✎</button>`;
                 const copyBtn = `<button onclick="event.stopPropagation(); duplicateProgram(${pIdx})" class="text-gray-400 hover:text-white ml-2">❐</button>`;
 
+                // LIBRARY CARD (Includes Edit)
                 libContainer.innerHTML += `
                     <div class="bg-app-card p-4 rounded-xl border ${border} mb-3">
-                        <div class="flex justify-between items-center mb-2"><h4 class="font-bold text-white flex items-center">${prog.name} ${renameBtn}</h4><div class="flex items-center">${isCoachProg ? '<span class="text-[10px] bg-app-accent px-2 rounded text-white mr-2">COACH</span>' : ''}${copyBtn}</div></div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-bold text-white flex items-center cursor-pointer" onclick="loadProgramForEdit(${pIdx})">${prog.name} ${renameBtn}</h4>
+                            <div class="flex items-center">${isCoachProg ? '<span class="text-[10px] bg-app-accent px-2 rounded text-white mr-2">COACH</span>' : ''}${copyBtn}</div>
+                        </div>
                         <div class="space-y-1">${prog.sessions.map((s, sIdx) => `
                             <div class="flex justify-between items-center bg-gray-900/50 p-3 rounded">
                                 <div onclick="openPreview(${pIdx}, ${sIdx})" class="flex-grow text-sm text-gray-400 hover:text-white cursor-pointer">${s.name}</div>
                                 <button onclick="editSessionFromList(${pIdx}, ${sIdx})" class="text-xs text-app-accent bg-gray-800 px-2 py-1 rounded ml-2">Modif.</button>
-                            </div>`).join('')}</div>
+                            </div>`).join('')}
+                        </div>
                     </div>`;
 
+                // HOME LIST
                 prog.sessions.forEach((s, sIdx) => {
                     homeList.innerHTML += `<div onclick="openPreview(${pIdx}, ${sIdx})" class="bg-app-card p-4 rounded-xl border border-gray-800 flex justify-between items-center cursor-pointer hover:border-app-accent"><div><h4 class="font-bold text-white">${s.name}</h4><p class="text-xs text-gray-500">${prog.name}</p></div><div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400">➤</div></div>`;
                 });
@@ -409,18 +405,30 @@
         function renameProgram(pIdx) {
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
             const newName = prompt("Nouveau nom :", dataSrc.programs[pIdx].name);
-            if(newName) { dataSrc.programs[pIdx].name = newName; if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id); else syncData(); updateUI(); }
-        }
-        function duplicateProgram(pIdx) {
-            const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
-            const copy = JSON.parse(JSON.stringify(dataSrc.programs[pIdx]));
-            copy.name += " (Copie)";
-            dataSrc.programs.push(copy);
-            if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id); else syncData();
-            updateUI();
+            if(newName) { 
+                dataSrc.programs[pIdx].name = newName; 
+                if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id); 
+                else syncData(); 
+                updateUI(); 
+            }
         }
 
-        function renderTeamList() { document.getElementById('team-list-display').innerHTML = userData.team.map(m => `<div class="text-xs text-gray-300 bg-gray-800 p-2 rounded flex justify-between items-center border border-gray-700"><div><span class="font-bold block">${m.prenom} ${m.nom}</span><span class="text-gray-500">${m.email}</span></div></div>`).join(''); }
+        function duplicateProgram(pIdx) {
+            const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
+            const original = dataSrc.programs[pIdx];
+            const copy = JSON.parse(JSON.stringify(original));
+            copy.name += " (Copie)";
+            dataSrc.programs.push(copy);
+            
+            if(currentCoachTarget) syncData(currentCoachTarget.content, currentCoachTarget.user_id);
+            else syncData();
+            
+            updateUI();
+        }
+        
+        function renderTeamList() {
+            document.getElementById('team-list-display').innerHTML = userData.team.map(m => `<div class="text-xs text-gray-300 bg-gray-800 p-2 rounded flex justify-between items-center border border-gray-700"><div><span class="font-bold block">${m.prenom} ${m.nom}</span><span class="text-gray-500">${m.email}</span></div></div>`).join('');
+        }
 
         function attemptUpgradeCoach() { if(document.getElementById('coach-code-input').value === "SUPACOACH") { userData.profile.role = 'coach'; syncData(); updateUI(); alert("Mode Coach !"); } }
         async function inviteAthlete() {
@@ -430,10 +438,15 @@
                 const p = data.content.profile;
                 if(userData.team.some(m => m.uid === data.user_id)) return alert("Déjà dans l'équipe");
                 userData.team.push({ email: p.email, nom: p.nom, prenom: p.prenom, uid: data.user_id });
-                syncData(); updateUI(); populateCoachSelector(); document.getElementById('invite-email').value = ''; alert(`${p.prenom} ajouté !`);
+                syncData(); updateUI(); populateCoachSelector(); document.getElementById('invite-email').value = '';
+                alert(`${p.prenom} ajouté !`);
             } else { alert("Aucun compte trouvé avec cet email."); }
         }
-        function populateCoachSelector() { const sel = document.getElementById('coach-athlete-select'); sel.innerHTML = '<option value="me">👤 Mon Espace Perso</option>'; userData.team.forEach(m => { sel.innerHTML += `<option value="${m.uid}">🏃 ${m.prenom} ${m.nom}</option>`; }); }
+        function populateCoachSelector() {
+            const sel = document.getElementById('coach-athlete-select');
+            sel.innerHTML = '<option value="me">👤 Mon Espace Perso</option>';
+            userData.team.forEach(m => { sel.innerHTML += `<option value="${m.uid}">🏃 ${m.prenom} ${m.nom}</option>`; });
+        }
         async function changeCoachTarget() {
             const targetId = document.getElementById('coach-athlete-select').value;
             if(targetId === 'me') { currentCoachTarget = null; document.getElementById('lib-title').innerText = "Mes Programmes"; updateUI(); } 
@@ -443,30 +456,80 @@
             }
         }
 
-        // SMART CREATION & EDITING
+        // CREATION & EDIT (SMART)
+        
+        // Load Program into Editor (Edit Mode)
+        function loadProgramForEdit(pIdx) {
+            const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
+            const prog = dataSrc.programs[pIdx];
+            
+            isEditingMode = true;
+            editingProgramIndex = pIdx;
+            
+            // CLEAN START
+            document.getElementById('program-name').value = prog.name;
+            document.getElementById('session-name').value = ''; // Clear session name input
+            tempExercises = []; // Clear exercises
+            renderTempExos();
+            
+            // Load Existing Sessions
+            tempSessionStack = JSON.parse(JSON.stringify(prog.sessions));
+            renderSessionStackUI();
+            
+            document.getElementById('add-mode-label').innerText = "Modifier Programme";
+            document.getElementById('btn-save-program').innerText = "Mettre à jour le Programme";
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+            
+            switchTab('view-add', null, 'Modification');
+        }
+
         function addExerciseToTemp() {
             const name = document.getElementById('exo-name').value;
             const format = document.getElementById('exo-format').value;
             if(!name) return;
             
+            // If editing an exercise line
             if(editingExoIndex !== null) {
-                tempExercises[editingExoIndex] = { name, format, sets: document.getElementById('exo-sets').value, reps: document.getElementById('exo-reps').value, rest: document.getElementById('exo-rest').value, rpe: document.getElementById('exo-rpe').value, load: document.getElementById('exo-load').value, note: document.getElementById('exo-note').value };
+                tempExercises[editingExoIndex] = { 
+                    name, format, 
+                    sets: document.getElementById('exo-sets').value, 
+                    reps: document.getElementById('exo-reps').value, 
+                    rest: document.getElementById('exo-rest').value, 
+                    rpe: document.getElementById('exo-rpe').value, 
+                    load: document.getElementById('exo-load').value, 
+                    note: document.getElementById('exo-note').value 
+                };
                 editingExoIndex = null;
                 document.getElementById('btn-add-exo').innerText = "+ Ajouter Ligne";
             } else {
-                tempExercises.push({ name, format, sets: document.getElementById('exo-sets').value, reps: document.getElementById('exo-reps').value, rest: document.getElementById('exo-rest').value, rpe: document.getElementById('exo-rpe').value, load: document.getElementById('exo-load').value, note: document.getElementById('exo-note').value });
+                tempExercises.push({ 
+                    name, format, 
+                    sets: document.getElementById('exo-sets').value, 
+                    reps: document.getElementById('exo-reps').value, 
+                    rest: document.getElementById('exo-rest').value, 
+                    rpe: document.getElementById('exo-rpe').value, 
+                    load: document.getElementById('exo-load').value, 
+                    note: document.getElementById('exo-note').value 
+                });
             }
+            
             renderTempExos();
             
+            // SMART LOGIC
             if(format === "Top Set") {
                 document.getElementById('exo-format').value = "Back Off";
                 document.getElementById('exo-sets').value = "";
                 document.getElementById('exo-load').value = "";
+                document.getElementById('exo-reps').value = "";
+                document.getElementById('exo-rpe').value = "";
             } else {
                 document.getElementById('exo-name').value = "";
                 document.getElementById('exo-format').value = "Straight Set";
                 document.getElementById('exo-sets').value = "";
                 document.getElementById('exo-load').value = "";
+                document.getElementById('exo-reps').value = "";
+                document.getElementById('exo-rpe').value = "";
+                document.getElementById('exo-rest').value = "";
             }
         }
         
@@ -474,15 +537,17 @@
             document.getElementById('temp-exercises-list').innerHTML = tempExercises.map((e, i) => `
                 <div class="flex justify-between items-center bg-gray-800 p-2 rounded mb-2 border border-gray-700 cursor-pointer" onclick="loadExoForEdit(${i})">
                     <div>
-                        <span class="text-xs font-bold text-white block">${e.name} <span class="text-app-topSet">${e.format || ''}</span></span>
+                        <span class="text-xs font-bold text-white block">${e.name} <span class="text-app-topSet">${e.format}</span></span>
                         <span class="text-[10px] text-gray-400">${e.sets}x${e.reps} ${e.load ? '@'+e.load : ''}</span>
                     </div>
                     <button onclick="event.stopPropagation(); removeExo(${i})" class="text-red-500 px-2">✕</button>
                 </div>`).join('');
         }
+
         function removeExo(i) { tempExercises.splice(i, 1); renderTempExos(); }
         function loadExoForEdit(i) {
-            const e = tempExercises[i]; editingExoIndex = i;
+            const e = tempExercises[i];
+            editingExoIndex = i;
             document.getElementById('exo-name').value = e.name;
             document.getElementById('exo-format').value = e.format;
             document.getElementById('exo-sets').value = e.sets;
@@ -493,55 +558,76 @@
             document.getElementById('exo-note').value = e.note;
             document.getElementById('btn-add-exo').innerText = "Modifier Ligne";
         }
-        function addSessionToStack() { const name = document.getElementById('session-name').value; if(!name) return; tempSessionStack.push({name, exercises: [...tempExercises]}); tempExercises = []; renderTempExos(); document.getElementById('session-name').value = ''; renderSessionStackUI(); }
-        function renderSessionStackUI() { document.getElementById('added-sessions-list').innerHTML = tempSessionStack.map((s, idx) => `<div class="bg-gray-800 border-l-4 border-app-success p-2 rounded mb-2 flex justify-between cursor-pointer" onclick="loadSessionFromStack(${idx})"><div class="text-sm text-white">${s.name} <span class="text-xs text-gray-500">(${s.exercises.length} exos)</span></div><button onclick="event.stopPropagation(); removeSessionFromStack(${idx})" class="text-red-400 text-xs">✕</button></div>`).join(''); }
+
+        function addSessionToStack() { 
+            const name = document.getElementById('session-name').value; 
+            if(!name) return; 
+            tempSessionStack.push({name, exercises: [...tempExercises]}); 
+            tempExercises = []; 
+            renderTempExos(); 
+            document.getElementById('session-name').value = ''; 
+            renderSessionStackUI();
+        }
+        
+        function renderSessionStackUI() {
+            document.getElementById('added-sessions-list').innerHTML = tempSessionStack.map((s, idx) => `
+                <div class="bg-gray-800 border-l-4 border-app-success p-2 rounded mb-2 flex justify-between cursor-pointer" onclick="loadSessionFromStack(${idx})">
+                    <div class="text-sm text-white">${s.name} <span class="text-xs text-gray-500">(${s.exercises.length} exos)</span></div>
+                    <button onclick="event.stopPropagation(); removeSessionFromStack(${idx})" class="text-red-400 text-xs">✕</button>
+                </div>`).join('');
+        }
+        
         function removeSessionFromStack(idx) { tempSessionStack.splice(idx, 1); renderSessionStackUI(); }
         function loadSessionFromStack(idx) {
             const s = tempSessionStack[idx];
             document.getElementById('session-name').value = s.name;
             tempExercises = JSON.parse(JSON.stringify(s.exercises));
             renderTempExos();
-            tempSessionStack.splice(idx, 1);
+            tempSessionStack.splice(idx, 1); // Remove to re-add later
             renderSessionStackUI();
         }
 
         async function saveFullProgram() {
             const name = document.getElementById('program-name').value;
             if(!name || tempSessionStack.length === 0) return alert("Incomplet");
+            
             const newProg = { name: name, source: currentCoachTarget ? 'coach' : 'personal', sessions: tempSessionStack };
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
             const targetUserId = currentCoachTarget ? currentCoachTarget.user_id : currentUser.id;
 
-            if(isEditingMode && editingProgramIndex !== null) dataSrc.programs[editingProgramIndex] = newProg;
-            else dataSrc.programs.push(newProg);
+            if(isEditingMode && editingProgramIndex !== null) {
+                dataSrc.programs[editingProgramIndex] = newProg; // UPDATE
+            } else {
+                dataSrc.programs.push(newProg); // CREATE
+            }
 
             await syncData(dataSrc, targetUserId);
             resetAddView(); switchTab('view-library', null, 'Bibliothèque');
         }
         
-        function loadProgramForEdit(pIdx) {
-            const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
-            const prog = dataSrc.programs[pIdx];
-            isEditingMode = true; editingProgramIndex = pIdx;
-            document.getElementById('program-name').value = prog.name;
-            tempSessionStack = JSON.parse(JSON.stringify(prog.sessions));
-            renderSessionStackUI();
-            document.getElementById('add-mode-label').innerText = "Modifier Programme";
-            document.getElementById('btn-save-program').innerText = "Mettre à jour le Programme";
-            document.getElementById('btn-cancel-edit').classList.remove('hidden');
-            switchTab('view-add', null, 'Modification');
+        function cancelEdit() { resetAddView(); switchTab('view-library', null, 'Bibliothèque'); }
+        function resetAddView() { 
+            isEditingMode = false; editingProgramIndex = null; editingExoIndex = null;
+            tempSessionStack = []; tempExercises = []; 
+            document.getElementById('session-name').value = ''; 
+            document.getElementById('program-name').value = ''; 
+            renderTempExos(); renderSessionStackUI();
+            document.getElementById('add-mode-label').innerText = "Créer Programme";
+            document.getElementById('btn-save-program').innerText = "Sauvegarder le Programme";
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
         }
-        
+
+        // EDIT SESSION (DIRECT)
         function editSessionFromList(pIdx, sIdx) {
-            currentProgramIndex = pIdx; currentPreviewSessionIndex = sIdx;
+            currentProgramIndex = pIdx; editingSessionIndex = sIdx;
             const dataSrc = currentCoachTarget ? currentCoachTarget.content : userData;
             const sess = dataSrc.programs[pIdx].sessions[sIdx];
-            isEditingMode = true; editingSessionIndex = sIdx;
+            isEditingMode = true;
             document.getElementById('session-name').value = sess.name;
             tempExercises = [...sess.exercises]; renderTempExos();
             document.getElementById('program-name-container').classList.add('hidden'); document.getElementById('added-sessions-list').classList.add('hidden'); document.getElementById('btn-validate-session').classList.add('hidden'); document.getElementById('btn-save-program').classList.add('hidden');
             document.getElementById('btn-update-session').classList.remove('hidden'); document.getElementById('btn-cancel-edit').classList.remove('hidden');
-            document.getElementById('add-mode-label').innerText = "Modifier Séance";
+            document.getElementById('add-mode-label').innerText = "Modifier";
             switchTab('view-add', null, 'Modification');
         }
         async function saveEditedSession() {
@@ -551,8 +637,6 @@
             await syncData(dataSrc, userId); alert("Séance mise à jour !"); resetAddView(); switchTab('view-library', null, 'Bibliothèque');
         }
         function editSessionFromPreview() { closePreview(); editSessionFromList(currentProgramIndex, currentPreviewSessionIndex); }
-        function cancelEdit() { resetAddView(); switchTab('view-library', null, 'Bibliothèque'); }
-        function resetAddView() { isEditingMode = false; editingProgramIndex = null; editingSessionIndex = null; editingExoIndex = null; tempSessionStack = []; tempExercises = []; document.getElementById('session-name').value = ''; document.getElementById('program-name').value = ''; renderTempExos(); renderSessionStackUI(); document.getElementById('program-name-container').classList.remove('hidden'); document.getElementById('added-sessions-list').classList.remove('hidden'); document.getElementById('btn-validate-session').classList.remove('hidden'); document.getElementById('btn-save-program').classList.remove('hidden'); document.getElementById('btn-update-session').classList.add('hidden'); document.getElementById('btn-cancel-edit').classList.add('hidden'); document.getElementById('add-mode-label').innerText = "Créer Programme"; document.getElementById('btn-save-program').innerText = "Sauvegarder le Programme"; document.getElementById('btn-add-exo').innerText = "+ Ajouter Ligne"; }
 
         // PREVIEW
         let currentProgramIndex, currentPreviewSessionIndex;
@@ -562,7 +646,14 @@
             document.getElementById('preview-title').innerText = sess.name;
             const btnDel = document.getElementById('btn-delete-session');
             if(dataSrc.programs[pIdx].source === 'coach' && userData.profile.role !== 'coach') btnDel.classList.add('hidden'); else btnDel.classList.remove('hidden');
-            document.getElementById('preview-exo-list').innerHTML = sess.exercises.map(e => `<div class="bg-gray-800 rounded p-3 border border-gray-700"><div class="flex justify-between items-start mb-1"><div><span class="font-bold text-white text-lg block">${e.name}</span><span class="${e.format==='Top Set'?'text-app-topSet':'text-gray-400'} text-xs font-bold uppercase">${e.format || ''}</span></div><span class="text-xs bg-gray-700 px-2 rounded text-gray-300">RPE ${e.rpe}</span></div><div class="text-xs text-gray-400">${e.sets} x ${e.reps} • ${e.rest}</div></div>`).join('');
+            document.getElementById('preview-exo-list').innerHTML = sess.exercises.map(e => `
+                <div class="bg-gray-800 rounded p-3 border border-gray-700">
+                    <div class="flex justify-between items-start mb-1">
+                        <div><span class="font-bold text-white text-lg block">${e.name}</span><span class="${e.format==='Top Set'?'text-app-topSet':'text-gray-400'} text-xs font-bold uppercase">${e.format || ''}</span></div>
+                        <span class="text-xs bg-gray-700 px-2 rounded text-gray-300">RPE ${e.rpe}</span>
+                    </div>
+                    <div class="text-xs text-gray-400">${e.sets} x ${e.reps} • ${e.rest}</div>
+                </div>`).join('');
             document.getElementById('view-preview').classList.remove('hidden');
         }
         function closePreview() { document.getElementById('view-preview').classList.add('hidden'); }
@@ -578,16 +669,34 @@
             document.getElementById('active-workout-container').innerHTML = `<h2 class="text-2xl text-white font-bold mb-6">${sess.name}</h2>` + 
                 sess.exercises.map((exo, idx) => {
                     let rows = ''; for(let i=1; i<=exo.sets; i++) rows += `<div class="grid grid-cols-10 gap-2 items-center mb-2" id="set-row-${idx}-${i}"><div class="col-span-1 text-center font-bold text-gray-500">${i}</div><div class="col-span-3"><input type="number" class="w-full bg-gray-900 rounded border border-gray-700 text-center py-2 text-white font-bold" placeholder="${exo.load || '-'}"></div><div class="col-span-3"><input type="number" class="w-full bg-gray-900 rounded border border-gray-700 text-center py-2 text-white font-bold" placeholder="${exo.reps}"></div><div class="col-span-3 flex justify-center"><button onclick="validateSet(this, ${idx}, ${i})" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-400 rounded py-2 transition font-bold text-xs border border-gray-600">RPE</button></div></div>`;
-                    return `<div class="bg-app-card rounded-xl border border-gray-800 overflow-hidden mb-6"><div class="bg-gray-800/50 p-3 border-b border-gray-800"><div class="flex justify-between items-center mb-1"><h3 class="font-bold text-lg text-white">${exo.name}</h3><span class="${exo.format==='Top Set'?'text-app-topSet':'text-gray-400'} text-xs font-bold uppercase">${exo.format || ''}</span></div><div class="flex gap-4 text-xs text-gray-400"><span>Obj: ${exo.load || '-'}</span><span>${exo.sets}x${exo.reps}</span><span>RPE ${exo.rpe}</span></div></div><div class="p-3"><div class="grid grid-cols-10 gap-2 text-[10px] text-gray-500 mb-2 text-center uppercase font-bold tracking-wider"><div class="col-span-1">#</div><div class="col-span-3">KG</div><div class="col-span-3">REPS</div><div class="col-span-3">RPE</div></div>${rows}</div></div>`;
+                    return `<div class="bg-app-card rounded-xl border border-gray-800 overflow-hidden mb-6"><div class="bg-gray-800/50 p-3 border-b border-gray-800"><div class="flex justify-between items-center mb-1"><h3 class="font-bold text-lg text-white">${exo.name}</h3><span class="${exo.format==='Top Set'?'text-app-topSet':'text-gray-400'} text-xs font-bold uppercase">${exo.format || ''}</span></div><div class="flex gap-4 text-xs text-gray-400"><span>Obj: ${exo.load || '-'}kg</span><span>${exo.sets}x${exo.reps}</span><span>RPE ${exo.rpe}</span></div></div><div class="p-3"><div class="grid grid-cols-10 gap-2 text-[10px] text-gray-500 mb-2 text-center uppercase font-bold tracking-wider"><div class="col-span-1">#</div><div class="col-span-3">KG</div><div class="col-span-3">REPS</div><div class="col-span-3">RPE</div></div>${rows}</div></div>`;
                 }).join('');
             let sec = 0; clearInterval(workoutInterval); workoutInterval = setInterval(() => { sec++; document.getElementById('active-timer').innerText = new Date(sec * 1000).toISOString().substr(14, 5); document.getElementById('timer-val').innerText = document.getElementById('active-timer').innerText; }, 1000);
         }
-        function validateSet(btn, exoIdx, setIdx) { const rpe = prompt("RPE (1-10)?", "8"); if(rpe) { btn.innerText = "✓"; btn.className = "w-full rounded py-2 font-bold text-xs btn-validated"; const row = document.getElementById(`set-row-${exoIdx}-${setIdx}`); row.dataset.performed = JSON.stringify({ kg: row.querySelectorAll('input')[0].value || 0, reps: row.querySelectorAll('input')[1].value || 0, rpe }); } }
+        function validateSet(btn, exoIdx, setIdx) { 
+            const rpe = prompt("RPE (1-10)?", "8"); 
+            if(rpe) { 
+                btn.innerText = "✓"; btn.className = "w-full rounded py-2 font-bold text-xs btn-validated"; 
+                const row = document.getElementById(`set-row-${exoIdx}-${setIdx}`); 
+                row.dataset.performed = JSON.stringify({ kg: row.querySelectorAll('input')[0].value || 0, reps: row.querySelectorAll('input')[1].value || 0, rpe }); 
+            } 
+        }
         function finishWorkout() {
             if(!confirm("Terminer ?")) return; clearInterval(workoutInterval); document.getElementById('view-active-workout').classList.add('hidden'); document.getElementById('workout-timer-display').classList.add('hidden');
             let vol = 0; const dateKey = new Date().toISOString().split('T')[0];
             const sessionRes = { title: document.querySelector('#active-workout-container h2').innerText, duration: document.getElementById('active-timer').innerText, exercises: [] };
-            document.querySelectorAll('[id^="set-row-"]').forEach(row => { if(row.dataset.performed) { const p = JSON.parse(row.dataset.performed); vol += parseFloat(p.kg) * parseFloat(p.reps); const exoName = row.closest('.bg-app-card').querySelector('h3').innerText; let existingExo = sessionRes.exercises.find(e => e.name === exoName); if(!existingExo) { existingExo = {name: exoName, sets: []}; sessionRes.exercises.push(existingExo); } existingExo.sets.push(p); } });
+            activeSessionExercises.forEach((baseExo, idx) => {
+                const exoRes = { name: baseExo.name, sets: [], max: 0 };
+                document.querySelectorAll(`[id^="set-row-${idx}-"]`).forEach(row => { 
+                    if(row.dataset.performed) { 
+                        const p = JSON.parse(row.dataset.performed); 
+                        vol += parseFloat(p.kg) * parseFloat(p.reps); 
+                        exoRes.sets.push(p);
+                        if(parseFloat(p.kg) > exoRes.max) exoRes.max = parseFloat(p.kg);
+                    } 
+                });
+                if(exoRes.sets.length > 0) sessionRes.exercises.push(exoRes);
+            });
             if(!userData.history[dateKey]) userData.history[dateKey] = []; userData.history[dateKey].push(sessionRes);
             userData.stats.sessions++; userData.stats.volume += vol;
             syncData(); updateUI(); updateStatsDropdown(); switchTab('view-stats', null, 'Statistiques');
@@ -595,27 +704,42 @@
         function minimizeWorkout() { document.getElementById('view-active-workout').classList.add('hidden'); }
         function returnToActiveWorkout() { document.getElementById('view-active-workout').classList.remove('hidden'); }
 
-        // CHARTS & UTILS
-        function updateStatsDropdown() { const sel = document.getElementById('stats-exo-select'); sel.innerHTML = '<option>Choisir...</option>'; const exos = new Set(); Object.values(userData.history).flat().forEach(s => { if(s.exercises) s.exercises.forEach(e => exos.add(e.name)) }); exos.forEach(name => sel.innerHTML += `<option>${name}</option>`); }
-        function renderChart() { const exoName = document.getElementById('stats-exo-select').value; const ctx = document.getElementById('progressionChart').getContext('2d'); const dataPoints = []; Object.entries(userData.history).forEach(([date, sessions]) => { sessions.forEach(sess => { if(sess.exercises) { const exoData = sess.exercises.find(e => e.name === exoName); if(exoData) { const maxWeight = Math.max(...exoData.sets.map(s => parseFloat(s.kg))); dataPoints.push({ x: date, y: maxWeight }); } } }); }); dataPoints.sort((a,b) => new Date(a.x) - new Date(b.x)); if(chartInstance) chartInstance.destroy(); chartInstance = new Chart(ctx, { type: 'line', data: { labels: dataPoints.map(d => d.x), datasets: [{ label: 'Charge Max (kg)', data: dataPoints.map(d => d.y), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', tension: 0.3, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } }, plugins: { legend: { labels: { color: 'white' } } } } }); }
+        // CHARTS & CALENDAR
+        function updateStatsDropdown() {
+            const sel = document.getElementById('stats-exo-select'); sel.innerHTML = '<option>Choisir...</option>'; const exos = new Set();
+            Object.values(userData.history).flat().forEach(s => { if(s.exercises) s.exercises.forEach(e => exos.add(e.name)) });
+            exos.forEach(name => sel.innerHTML += `<option>${name}</option>`);
+        }
+        function renderChart() { 
+            const exoName = document.getElementById('stats-exo-select').value; const ctx = document.getElementById('progressionChart').getContext('2d');
+            const dataPoints = []; Object.entries(userData.history).forEach(([date, sessions]) => { sessions.forEach(sess => { if(sess.exercises) { const exoData = sess.exercises.find(e => e.name === exoName); if(exoData) { const maxWeight = Math.max(...exoData.sets.map(s => parseFloat(s.kg))); dataPoints.push({ x: date, y: maxWeight }); } } }); });
+            dataPoints.sort((a,b) => new Date(a.x) - new Date(b.x));
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, { type: 'line', data: { labels: dataPoints.map(d => d.x), datasets: [{ label: 'Charge Max (kg)', data: dataPoints.map(d => d.y), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', tension: 0.3, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } }, plugins: { legend: { labels: { color: 'white' } } } } });
+        }
+
+        // UTILS
         function switchTab(viewId, btnElement, title) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden')); document.getElementById(viewId).classList.remove('hidden'); document.getElementById('page-title').innerText = title;
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active')); if(btnElement) btnElement.classList.add('active');
             const addBtn = document.getElementById('header-add-btn'); if(viewId === 'view-library') addBtn.classList.remove('hidden'); else addBtn.classList.add('hidden');
             if(viewId === 'view-add') document.getElementById('add-target-display').innerText = currentCoachTarget ? currentCoachTarget.content.profile.prenom : "Moi-même";
         }
-        function initCalendar(key) {
-            const grid = document.getElementById('calendar-grid'); if(!grid) return; grid.innerHTML = ''; for(let i=0; i<2; i++) grid.innerHTML += `<div></div>`;
-            const now = new Date(); const yearMonth = now.toISOString().slice(0, 7); const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            for(let i=1; i<=days; i++) {
-                const k = `${yearMonth}-${String(i).padStart(2, '0')}`; const hasWork = userData.history[k]; const border = i === now.getDate() ? 'border border-app-accent' : '';
-                grid.innerHTML += `<div onclick="showDayDetails('${k}')" class="p-2 rounded-lg cursor-pointer hover:bg-gray-800 ${hasWork?'text-white font-bold':'text-gray-600'} ${border}">${i} ${hasWork?'<div class="w-1 h-1 bg-app-success rounded-full mx-auto"></div>':''}</div>`;
+        function initCalendar() {
+            const grid = document.getElementById('calendar-grid'); grid.innerHTML = ''; for(let i=0; i<2; i++) grid.innerHTML += `<div></div>`;
+            const yearMonth = new Date().toISOString().slice(0, 7);
+            for(let i=1; i<=31; i++) {
+                const k = `${yearMonth}-${String(i).padStart(2, '0')}`;
+                const hasWork = userData.history[k];
+                grid.innerHTML += `<div onclick="showDayDetails('${k}')" class="p-2 rounded-lg cursor-pointer hover:bg-gray-800 ${hasWork?'text-white font-bold':'text-gray-600'} ${i===new Date().getDate()?'border border-app-accent':''}">${i} ${hasWork?'<div class="w-1 h-1 bg-app-success rounded-full mx-auto"></div>':''}</div>`;
             }
-            if(key) showDayDetails(key);
         }
         function showDayDetails(k) {
             const s = userData.history[k]; const b = document.getElementById('calendar-day-detail');
-            if(s) b.innerHTML = s.map(sess => { const det = sess.exercises.map(e => `<div class="flex justify-between text-xs text-gray-400 border-b border-gray-700 pb-1"><span>${e.name}</span><span>${e.sets.length} sets (Max: ${Math.max(...e.sets.map(i=>parseFloat(i.kg)||0))}kg)</span></div>`).join(''); return `<div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-2"><div class="flex justify-between mb-1"><span class="text-app-success text-xs font-bold">✓ Terminé</span><span class="text-xs text-gray-500">${sess.duration}</span></div><div class="text-white font-bold mb-2">${sess.title}</div><div class="space-y-1">${det}</div></div>`; }).join('');
+            if(s) b.innerHTML = s.map(sess => {
+                const details = sess.exercises.map(e => `<div class="flex justify-between text-xs text-gray-400 border-b border-gray-700 pb-1"><span>${e.name}</span><span>Max: ${Math.max(...e.sets.map(i=>parseFloat(i.kg)))}kg (${e.sets.length} sets)</span></div>`).join('');
+                return `<div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-2"><div class="flex justify-between mb-2"><span class="text-app-success font-bold text-xs">✓ Terminé</span><span class="text-gray-500 text-xs">${sess.duration}</span></div><div class="text-white font-bold mb-2">${sess.title}</div><div class="space-y-1">${details}</div></div>`;
+            }).join('');
             else b.innerHTML = `<div class="bg-gray-800/30 border border-dashed border-gray-700 rounded-xl p-6 text-center text-sm text-gray-500">Rien ce jour-là.</div>`;
         }
     </script>
